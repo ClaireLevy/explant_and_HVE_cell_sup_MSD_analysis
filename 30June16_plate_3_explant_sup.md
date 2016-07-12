@@ -11,104 +11,76 @@ Plate 3: 96 well 4 spot prototype Human Triplex
     MIG (CXCL9)
     RANTES (CCL5)
 
-The MSD machine gives the data in an excel or text format. I have .csv file with the results.
+Of the 48 standards that we measured, 37 are in the detection range. The following standards were out of the detection range:
 
-Of the 26 standards that we measured, 26 are in the detection range. The following standards were out of the detection range:
-
-<table style="width:85%;">
+<table style="width:53%;">
 <colgroup>
 <col width="12%" />
-<col width="12%" />
 <col width="11%" />
-<col width="30%" />
-<col width="18%" />
+<col width="29%" />
 </colgroup>
 <thead>
 <tr class="header">
-<th align="center">Type</th>
 <th align="center">Sample</th>
 <th align="center">Assay</th>
 <th align="center">Detection.Range</th>
-<th align="center">X..Recovery</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="center">Standard</td>
 <td align="center">STD-01</td>
 <td align="center">IL1-RA</td>
 <td align="center">Above Fit Curve Range</td>
-<td align="center">103.3</td>
 </tr>
 <tr class="even">
-<td align="center">Standard</td>
 <td align="center">STD-01</td>
 <td align="center">IL1-RA</td>
 <td align="center">Above Fit Curve Range</td>
-<td align="center">100.8</td>
 </tr>
 <tr class="odd">
-<td align="center">Standard</td>
 <td align="center">STD-08</td>
 <td align="center">IL1-RA</td>
 <td align="center">Below Fit Curve Range</td>
-<td align="center">NA</td>
 </tr>
 <tr class="even">
-<td align="center">Standard</td>
 <td align="center">STD-08</td>
 <td align="center">IL1-RA</td>
 <td align="center">Below Fit Curve Range</td>
-<td align="center">NA</td>
 </tr>
 <tr class="odd">
-<td align="center">Standard</td>
 <td align="center">STD-01</td>
 <td align="center">MIG</td>
 <td align="center">Above Fit Curve Range</td>
-<td align="center">100</td>
 </tr>
 <tr class="even">
-<td align="center">Standard</td>
 <td align="center">STD-08</td>
 <td align="center">MIG</td>
 <td align="center">Below Fit Curve Range</td>
-<td align="center">NA</td>
 </tr>
 <tr class="odd">
-<td align="center">Standard</td>
 <td align="center">STD-08</td>
 <td align="center">MIG</td>
 <td align="center">Below Fit Curve Range</td>
-<td align="center">NA</td>
 </tr>
 <tr class="even">
-<td align="center">Standard</td>
 <td align="center">STD-01</td>
 <td align="center">RANTES</td>
 <td align="center">Above Fit Curve Range</td>
-<td align="center">106.9</td>
 </tr>
 <tr class="odd">
-<td align="center">Standard</td>
 <td align="center">STD-01</td>
 <td align="center">RANTES</td>
 <td align="center">Above Fit Curve Range</td>
-<td align="center">107</td>
 </tr>
 <tr class="even">
-<td align="center">Standard</td>
 <td align="center">STD-08</td>
 <td align="center">RANTES</td>
 <td align="center">Below Fit Curve Range</td>
-<td align="center">NA</td>
 </tr>
 <tr class="odd">
-<td align="center">Standard</td>
 <td align="center">STD-08</td>
 <td align="center">RANTES</td>
 <td align="center">Below Fit Curve Range</td>
-<td align="center">NA</td>
 </tr>
 </tbody>
 </table>
@@ -146,14 +118,8 @@ The R-squared values for goodness-of-fit were good for all assays:
 </tbody>
 </table>
 
-MIG data
-
 ![](30June16_plate_3_explant_sup_files/figure-markdown_github/MIG-1.png)
 
-RANTES data
-
 ![](30June16_plate_3_explant_sup_files/figure-markdown_github/RANTES-1.png)
-
-IL1-RA data
 
 ![](30June16_plate_3_explant_sup_files/figure-markdown_github/IL1-ra-1.png)

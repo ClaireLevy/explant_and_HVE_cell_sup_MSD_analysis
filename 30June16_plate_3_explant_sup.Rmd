@@ -3,7 +3,6 @@ title: '30June16 explant sups plate 3: MIG, RANTES, IL1ra'
 author: "Claire Levy"
 date: "July 6, 2016"
 output: github_document
-  
 ---
 This is an analysis of data from running our MSD plate 3 on some of HSV2 infected explant sup samples for Herpes P01. See explant_and_HVE_cell_sup_MSD_README for more on the different plates/analyte panels. This plate has the following analytes measured in each well
 
@@ -13,7 +12,6 @@ Plate 3: 96 well 4 spot prototype Human Triplex
 	MIG (CXCL9)
 	RANTES (CCL5)
 	
-The MSD machine gives the data in an excel or text format. I have .csv file with the results. 
 
 
 ```{r setup, echo=FALSE, warning=FALSE, message= FALSE}
@@ -23,6 +21,12 @@ library(pander)
 library(reshape2)
 library(stringr)
 library(swarm)
+
+
+
+
+
+#The MSD machine gives the data in an excel or text format. I have .csv file with the results. 
 
 
 #read in the .csv raw results file
@@ -79,12 +83,13 @@ standardsInRange <-standards%>%
 standardsOutOfRange<-standards%>%
   filter(Detection.Range != "In Detection Range")%>%
   arrange(Type, Assay, Sample)%>%
-  select(Type,Sample, Assay, Detection.Range, X..Recovery)
+  select(Sample, Assay, Detection.Range)
+
 
 
 ```
 
-Of the `r length(standards)` standards that we measured, `r length(standardsInRange)` are in the detection range. The following standards were out of the detection range:
+Of the `r nrow(standards)` standards that we measured, `r nrow(standardsInRange)` are in the detection range. The following standards were out of the detection range:
 `r pander(standardsOutOfRange)`
 
 
@@ -106,7 +111,8 @@ ggplot(stdFit, aes(x = Sample, y = X..Recovery))+
   theme(axis.text.x = element_text(angle=25))+
   scale_y_continuous(limits = c(75, 200))+
   geom_abline(slope = 0, intercept = c(80, 120))+
-  labs(y = "Percent Recovery")
+  labs(y = "Percent Recovery")+
+  theme(axis.text.x = element_text(size = rel(0.8)))
   
 ```
 
@@ -206,7 +212,6 @@ AvgConcExplantDat <- explantDat %>%
   summarize(avgConc = mean(Calc..Concentration))
 ```
 
-MIG data
 
 ```{r MIG, echo=FALSE, warning=FALSE, message= FALSE}
 
@@ -215,72 +220,90 @@ MIG data
 
 #MIG
 
-MIGAvgConcExplantDat<- AvgConcExplantDat %>%
+MIGexplantDat<- explantDat %>%
   filter(Assay == "MIG")
 
-ggplot(data = MIGAvgConcExplantDat, aes(x = Virus, y = avgConc))+
+ggplot(data = MIGexplantDat, aes(x = Virus, y = Calc..Concentration))+
   
-  geom_point(aes(color = Donor, shape = Detection.Range ),size = 2 )+
+  geom_point(aes(color = Donor, shape = Detection.Range ),size = 1, alpha = 0.5 )+
   
-  geom_line(aes(color = Donor, group = Donor))+
+  stat_summary(aes(group = Donor, color = Donor),fun.y = mean, geom = "point", size = 2)+
+  
+  stat_summary(aes(group = Donor, color = Donor), fun.y =mean, geom = "line")+
 
   
   scale_shape_manual(values = c("Above Fit Curve Range" = 1, "Below Fit Curve Range" = 1, "In Detection Range" = 16))+
   
   scale_y_log10()+
   
+  labs( y = "Concentration")+
+  
   facet_wrap(~Timepoint)+
   
-  theme(axis.text.x = element_text(angle = 25))
+  theme(axis.text.x = element_text(angle = 25))+
+  ggtitle("MIG data")
+
+
 ```
 
 
-RANTES data
 
 ```{r RANTES, echo=FALSE, warning=FALSE, message= FALSE}
 #RANTES
 
-RANTESAvgConcExplantDat<- AvgConcExplantDat %>%
+RANTESexplantDat<- explantDat %>%
   filter(Assay == "RANTES")
 
-ggplot(data = RANTESAvgConcExplantDat, aes(x = Virus, y = avgConc))+
+ggplot(data = RANTESexplantDat, aes(x = Virus, y = Calc..Concentration))+
   
-  geom_point(aes(color = Donor, shape = Detection.Range ),size = 2 )+
+  geom_point(aes(color = Donor, shape = Detection.Range ),size = 1, alpha = 0.5 )+
   
-  geom_line(aes(color = Donor, group = Donor))+
+  stat_summary(aes(group = Donor, color = Donor),fun.y = mean, geom = "point", size = 2)+
+  
+  stat_summary(aes(group = Donor, color = Donor), fun.y =mean, geom = "line")+
 
   
   scale_shape_manual(values = c("Above Fit Curve Range" = 1, "Below Fit Curve Range" = 1, "In Detection Range" = 16))+
   
   scale_y_log10()+
   
+  labs( y = "Concentration")+
+  
   facet_wrap(~Timepoint)+
   
-  theme(axis.text.x = element_text(angle = 25))
+  theme(axis.text.x = element_text(angle = 25))+
+  ggtitle("RANTES data")
+
+
 ```
 
 
-IL1-RA data
 
 ```{r IL1-ra, echo=FALSE, warning=FALSE, message= FALSE}
 ## IL1-ra
 
-IL1raAvgConcExplantDat<- AvgConcExplantDat %>%
+IL1RAexplantDat<- explantDat %>%
   filter(Assay == "IL1-RA")
 
-ggplot(data = IL1raAvgConcExplantDat, aes(x = Virus, y = avgConc))+
+ggplot(data = IL1RAexplantDat, aes(x = Virus, y = Calc..Concentration))+
   
-  geom_point(aes(color = Donor, shape = Detection.Range ),size = 2 )+
+  geom_point(aes(color = Donor, shape = Detection.Range ),size = 1, alpha = 0.5 )+
   
-  geom_line(aes(color = Donor, group = Donor))+
+  stat_summary(aes(group = Donor, color = Donor),fun.y = mean, geom = "point", size = 2)+
+  
+  stat_summary(aes(group = Donor, color = Donor), fun.y =mean, geom = "line")+
 
   
   scale_shape_manual(values = c("Above Fit Curve Range" = 1, "Below Fit Curve Range" = 1, "In Detection Range" = 16))+
   
   scale_y_log10()+
   
+  labs( y = "Concentration")+
+  
   facet_wrap(~Timepoint)+
   
-  theme(axis.text.x = element_text(angle = 25))
+  theme(axis.text.x = element_text(angle = 25))+
+  ggtitle("IL1-RA data")
+
 
 ```
