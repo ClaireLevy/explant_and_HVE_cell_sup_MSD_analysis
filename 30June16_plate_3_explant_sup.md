@@ -3,7 +3,7 @@
 Claire Levy
 July 6, 2016
 
-This is an analysis of data from running our MSD plate 3 on some of HSV2 infected explant sup samples for Herpes P01. See explant\_and\_HVE\_cell\_sup\_MSD\_README for more on the different plates/analyte panels. This plate has the following analytes measured in each well
+This is an analysis of data from running our MSD plate 3 on some of the HSV2 infected explant sup samples for Herpes P01. See "explant\_and\_HVE\_cell\_sup\_MSD\_README.txt"" for more on the different plates/analyte panels. This plate has the following analytes measured in each well
 
 Plate 3: 96 well 4 spot prototype Human Triplex
 
@@ -120,6 +120,14 @@ The R-squared values for goodness-of-fit were good for all assays:
 
 ![](30June16_plate_3_explant_sup_files/figure-markdown_github/MIG-1.png)
 
+Another way of looking at the data
+
+![](30June16_plate_3_explant_sup_files/figure-markdown_github/MIG%20alternate-1.png)
+
 ![](30June16_plate_3_explant_sup_files/figure-markdown_github/RANTES-1.png)
 
+![](30June16_plate_3_explant_sup_files/figure-markdown_github/RANTES%20alternate-1.png)
+
 ![](30June16_plate_3_explant_sup_files/figure-markdown_github/IL1-ra-1.png)
+
+![](30June16_plate_3_explant_sup_files/figure-markdown_github/IL1RA%20alternate-1.png)
