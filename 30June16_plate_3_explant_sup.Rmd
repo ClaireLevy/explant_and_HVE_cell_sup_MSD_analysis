@@ -1,0 +1,286 @@
+---
+title: '30June16 explant sups plate 3: MIG, RANTES, IL1ra'
+author: "Claire Levy"
+date: "July 6, 2016"
+output: github_document
+  
+---
+This is an analysis of data from running our MSD plate 3 on some of HSV2 infected explant sup samples for Herpes P01. See explant_and_HVE_cell_sup_MSD_README for more on the different plates/analyte panels. This plate has the following analytes measured in each well
+
+Plate 3: 96 well 4 spot prototype Human Triplex
+
+	Il-1ra
+	MIG (CXCL9)
+	RANTES (CCL5)
+	
+The MSD machine gives the data in an excel or text format. I have .csv file with the results. 
+
+
+```{r setup, echo=FALSE, warning=FALSE, message= FALSE}
+library(dplyr)
+library(ggplot2)
+library(pander)
+library(reshape2)
+library(stringr)
+library(swarm)
+
+
+#read in the .csv raw results file
+#../ to go up one level and then back down into a different folder. I exported this file from the DWB experiment called "Hladik plate 3 30 June 16 corrected layout". I imported that file from the folder location where FC saved the DWB experiment with the corrected layout. That file is here:
+
+#J:\MacLabUsers\HLADIK SHARED\Projects\Herpes study\MSD\CVL Test Samples\Raw Data from MSD\Test Run
+
+#I appended the name with "corrected layout" because I imported the wrong file at first and you can't delete them from the software.
+
+
+dat<- read.csv("../raw_data/30June16_plate3_CVL_and_explant_sup_CLexport.csv", skip = 1)
+
+
+#### NOTE ####
+# This file also contains data from TEST CVL samples from the hvtn clinic that we were running to test the analytes before doing the actual trial samples from Kenya.
+
+
+#make a column identifying what group the sample belongs to, standards or explant sup or CVL sample so I can filter out what I want.
+
+
+dat<- dat %>%
+  mutate(Type =
+ ifelse(str_detect(Sample,"^3")==TRUE, "explant_sup",
+        ifelse(str_detect(Sample, "R|V")==TRUE,
+                          "CVL","Standard")))
+
+
+
+## Also, we included the diluted stock calibrator and the blended working stock on the plate when we shouldn't have. So we excluded those samples in the Discovery workbench software, which re-sets the curve fit based on the remaining samples. When you export the data table, it still includes those EXCLUDED samples. I am removing them here.
+
+
+dat <- dat %>%
+  filter(Sample != "Diluted Stock Calibrator" & Sample != "Blended Working Stock")
+```
+
+
+
+
+```{r standards, echo=FALSE, warning=FALSE, message= FALSE}
+
+
+#filtering out the standards
+standards <- dat %>%
+  filter(Type == "Standard")
+  
+
+#which standards are in the detection range
+standardsInRange <-standards%>%
+  filter(Detection.Range == "In Detection Range")
+
+
+#which were not in the detection range?
+
+standardsOutOfRange<-standards%>%
+  filter(Detection.Range != "In Detection Range")%>%
+  arrange(Type, Assay, Sample)%>%
+  select(Type,Sample, Assay, Detection.Range, X..Recovery)
+
+
+```
+
+Of the `r length(standards)` standards that we measured, `r length(standardsInRange)` are in the detection range. The following standards were out of the detection range:
+`r pander(standardsOutOfRange)`
+
+
+
+
+Here is a plot of the % recovery (extrapolated concentration/ known concentration x 100) for the standards that were in the detection range, with lines at the "good recovery" limits of 80 and 120% recovery.
+
+
+```{r percent recovery, echo=FALSE, warning=FALSE, message= FALSE}
+
+stdFit<- standardsInRange %>% 
+  arrange(Sample,Assay)%>%
+  select(Type, Sample, Assay, X..Recovery,Fit.Statistic..RSquared, Concentration, Calc..Concentration)
+
+
+ggplot(stdFit, aes(x = Sample, y = X..Recovery))+
+  geom_point(aes(color = Sample))+
+  facet_wrap(~Assay)+
+  theme(axis.text.x = element_text(angle=25))+
+  scale_y_continuous(limits = c(75, 200))+
+  geom_abline(slope = 0, intercept = c(80, 120))+
+  labs(y = "Percent Recovery")
+  
+```
+
+The R-squared values for goodness-of-fit were good for all assays:
+
+```{r r-squared, echo=FALSE, warning=FALSE, message= FALSE}
+
+rSquared<-stdFit%>%
+  group_by(Assay)%>%
+  summarize(R_Squared = mean(Fit.Statistic..RSquared))
+
+pander(rSquared)
+```
+
+
+
+
+
+```{r explant data cleanup, echo=FALSE, warning=FALSE, message= FALSE}
+
+#filtering for the samples I want (just want explant sups, not CVLS or standards)
+
+explantDat<-dat%>%
+  filter(Type == "explant_sup")
+
+#sanity check: I put 56 samples on the plate and there are 3 analytes so we should have 56 x 3 = 168 samples. 
+
+#We didn't have enough sample to do two replicates for 324-T2-M so we didn't add anything to well F10. We did read the well though, so there is data for it, but I want to exclude it because there wasn't sample there
+
+explantDat <- explantDat %>%
+  filter(Well != "F10") #removes 3 data points, 1 for each analyte so 165 left
+
+#which explant samples are in the detection range
+explantDatInRange <-explantDat%>%
+  filter(Detection.Range == "In Detection Range")
+
+
+#which were not in the detection range?
+
+explantDatOutOfRange<-explantDat%>%
+  filter(Detection.Range != "In Detection Range")%>%
+  arrange(Type, Assay, Sample)%>%
+  select(Type,Sample, Assay, Detection.Range)
+
+```
+
+
+
+```{r adding ids and avg reps, echo=FALSE, warning=FALSE, message= FALSE}
+
+# I want to be able to group the data by timepoint and donor and virus so I need to separate the sample name and make new columns identifying them that way
+
+
+donorTimeVirus<-colsplit(explantDat$Sample,"-", c("Donor","Timepoint","Virus") )
+
+#bind the split col back to explantDat
+
+explantDat<-cbind(donorTimeVirus, explantDat)
+
+
+#I should only have 1 replicate for 324-T2-M. All other samples have 2 reps. 
+
+
+#There is one sample where the concentration was below the fit curve range and the concentration is given as "NaN". In order for that point to appear on the plot, I am going to give those samples a value of "1"
+
+
+NaNSamples<- explantDat %>%
+  filter(Calc..Concentration == "NaN")%>%
+  select(Sample, Detection.Range, Calc..Concentration)
+
+explantDat <- explantDat %>%
+  mutate(Calc..Concentration = ifelse(Calc..Concentration == "NaN", "1", Calc..Concentration))
+
+explantDat$Donor <- as.factor(explantDat$Donor)
+
+explantDat$Calc..Concentration <-as.numeric(explantDat$Calc..Concentration)
+
+explantDat$Type <- as.factor(explantDat$Type)
+
+explantDat$Virus <- as.factor(explantDat$Virus)
+
+explantDat$Virus<-factor(explantDat$Virus, levels = c("M", "V1","V2","M 1:50", "V2 1:50"))
+
+explantDat$Timepoint<-as.factor(explantDat$Timepoint)
+
+
+#Averaging the replicates. 
+#Sanity check: 
+#For 27/28 samples I have 2 replicates = 54 
+# For 1/28 samples I have 1 replicate = 1
+#If I average those samples, I get 54/2 + 1 = 28 avg values
+# I have data for 3 analytes so I should have 28 * 3 average values.
+
+
+AvgConcExplantDat <- explantDat %>%
+  group_by(Sample, Assay, Donor, Timepoint,Virus, Detection.Range)%>%
+  summarize(avgConc = mean(Calc..Concentration))
+```
+
+MIG data
+
+```{r MIG, echo=FALSE, warning=FALSE, message= FALSE}
+
+#I want to make separate plots for each analyte, so I'll split it into different dfs here:
+
+
+#MIG
+
+MIGAvgConcExplantDat<- AvgConcExplantDat %>%
+  filter(Assay == "MIG")
+
+ggplot(data = MIGAvgConcExplantDat, aes(x = Virus, y = avgConc))+
+  
+  geom_point(aes(color = Donor, shape = Detection.Range ),size = 2 )+
+  
+  geom_line(aes(color = Donor, group = Donor))+
+
+  
+  scale_shape_manual(values = c("Above Fit Curve Range" = 1, "Below Fit Curve Range" = 1, "In Detection Range" = 16))+
+  
+  scale_y_log10()+
+  
+  facet_wrap(~Timepoint)+
+  
+  theme(axis.text.x = element_text(angle = 25))
+```
+
+
+RANTES data
+
+```{r RANTES, echo=FALSE, warning=FALSE, message= FALSE}
+#RANTES
+
+RANTESAvgConcExplantDat<- AvgConcExplantDat %>%
+  filter(Assay == "RANTES")
+
+ggplot(data = RANTESAvgConcExplantDat, aes(x = Virus, y = avgConc))+
+  
+  geom_point(aes(color = Donor, shape = Detection.Range ),size = 2 )+
+  
+  geom_line(aes(color = Donor, group = Donor))+
+
+  
+  scale_shape_manual(values = c("Above Fit Curve Range" = 1, "Below Fit Curve Range" = 1, "In Detection Range" = 16))+
+  
+  scale_y_log10()+
+  
+  facet_wrap(~Timepoint)+
+  
+  theme(axis.text.x = element_text(angle = 25))
+```
+
+
+IL1-RA data
+
+```{r IL1-ra, echo=FALSE, warning=FALSE, message= FALSE}
+## IL1-ra
+
+IL1raAvgConcExplantDat<- AvgConcExplantDat %>%
+  filter(Assay == "IL1-RA")
+
+ggplot(data = IL1raAvgConcExplantDat, aes(x = Virus, y = avgConc))+
+  
+  geom_point(aes(color = Donor, shape = Detection.Range ),size = 2 )+
+  
+  geom_line(aes(color = Donor, group = Donor))+
+
+  
+  scale_shape_manual(values = c("Above Fit Curve Range" = 1, "Below Fit Curve Range" = 1, "In Detection Range" = 16))+
+  
+  scale_y_log10()+
+  
+  facet_wrap(~Timepoint)+
+  
+  theme(axis.text.x = element_text(angle = 25))
+
+```
