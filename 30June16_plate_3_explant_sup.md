@@ -85,7 +85,7 @@ Of the 48 standards that we measured, 37 are in the detection range. The followi
 </tbody>
 </table>
 
-Here is a plot of the % recovery (extrapolated concentration/ known concentration x 100) for the standards that were in the detection range, with lines at the "good recovery" limits of 80 and 120% recovery.
+Here is a plot of the % recovery (extrapolated concentration/ known concentration x 100) for the standards that were either within or above the detection range, with lines at the "good recovery" limits of 80 and 120% recovery.
 
 ![](30June16_plate_3_explant_sup_files/figure-markdown_github/percent%20recovery-1.png)
 
@@ -118,16 +118,15 @@ The R-squared values for goodness-of-fit were good for all assays:
 </tbody>
 </table>
 
+Caveats
+-------
+
+Some data points were above the range of the curve fit. The MSD software can extrapolate values for these if the curve is linear at the top. Values cannot be extrapolated when the data was below the fit curve range, so those are not shown in the following plots.
+
+![](30June16_plate_3_explant_sup_files/figure-markdown_github/everything-1.png)
+
 ![](30June16_plate_3_explant_sup_files/figure-markdown_github/MIG-1.png)
-
-Another way of looking at the data
-
-![](30June16_plate_3_explant_sup_files/figure-markdown_github/MIG%20alternate-1.png)
 
 ![](30June16_plate_3_explant_sup_files/figure-markdown_github/RANTES-1.png)
 
-![](30June16_plate_3_explant_sup_files/figure-markdown_github/RANTES%20alternate-1.png)
-
 ![](30June16_plate_3_explant_sup_files/figure-markdown_github/IL1-ra-1.png)
-
-![](30June16_plate_3_explant_sup_files/figure-markdown_github/IL1RA%20alternate-1.png)

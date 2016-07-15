@@ -40,11 +40,21 @@ library(swarm)
 dat<- read.csv("../raw_data/30June16_plate3_CVL_and_explant_sup_CLexport.csv", skip = 1)
 
 
+
+
+### Formatting note: In the data table, there is both " T3" and "T3" so I am fixing it here.
+
+dat$Sample<- str_replace(dat$Sample, " T3", "T3")
+
+
 #### NOTE ####
 # This file also contains data from TEST CVL samples from the hvtn clinic that we were running to test the analytes before doing the actual trial samples from Kenya.
 
 
 #make a column identifying what group the sample belongs to, standards or explant sup or CVL sample so I can filter out what I want.
+
+
+
 
 
 dat<- dat %>%
@@ -95,18 +105,20 @@ Of the `r nrow(standards)` standards that we measured, `r nrow(standardsInRange)
 
 
 
-Here is a plot of the % recovery (extrapolated concentration/ known concentration x 100) for the standards that were in the detection range, with lines at the "good recovery" limits of 80 and 120% recovery.
+Here is a plot of the % recovery (extrapolated concentration/ known concentration x 100) for the standards that were either within or above the detection range, with lines at the "good recovery" limits of 80 and 120% recovery.
 
 
 ```{r percent recovery, echo=FALSE, warning=FALSE, message= FALSE}
 
-stdFit<- standardsInRange %>% 
+stdFit<- standards %>% 
   arrange(Sample,Assay)%>%
-  select(Type, Sample, Assay, X..Recovery,Fit.Statistic..RSquared, Concentration, Calc..Concentration)
+  filter(Detection.Range != "Below Fit Curve Range")%>%
+  select(Type, Sample, Assay,Detection.Range, X..Recovery,Fit.Statistic..RSquared, Concentration, Calc..Concentration)
 
 
 ggplot(stdFit, aes(x = Sample, y = X..Recovery))+
-  geom_point(aes(color = Sample))+
+  geom_point(aes(color = Sample, shape = Detection.Range ),size = 3)+
+  scale_shape_manual(values = c("Above Fit Curve Range" = 1, "In Detection Range" = 16))+
   facet_wrap(~Assay)+
   theme(axis.text.x = element_text(angle=25))+
   scale_y_continuous(limits = c(75, 200))+
@@ -127,6 +139,35 @@ rSquared<-stdFit%>%
 pander(rSquared)
 ```
 
+
+```{r standard curves, echo=FALSE, warning=FALSE, message= FALSE}
+
+# standardCurve<- function (Calc.Top, Calc.Bottom, Calc.HillSlope, Calc.Midpoint, Concentration){
+# 
+# Calc.Top + (Calc.Bottom - Calc.Top/(1+(Concentration/Calc.Midpoint)^Calc.HillSlope))
+# }
+# 
+# 
+# MIGcurveData <- standards%>%
+#   filter(Assay == "MIG") %>%
+#   mutate(UpperLimit = Algorithm.Parameter..Calc..Top-( Detection.Limits..Top.of.Range.Parameter * Std..Deviation ))%>%
+#   mutate(LowerLimit = min(Concentration)+(2.5 * Std..Deviation ))
+# 
+# 
+# 
+# MIGcalcCurve <- standardCurve(MIGcurveData$Algorithm.Parameter..Calc..Top,MIGcurveData$Algorithm.Parameter..Calc..Bottom, MIGcurveData$Algorithm.Parameter..Calc..HillSlope, MIGcurveData$Algorithm.Parameter..Calc..MidPoint, MIGcurveData$Concentration)
+# 
+# 
+# ggplot(MIGcurveData, aes(x = Concentration, y = Signal))+
+#   geom_point()+
+#   scale_y_log10()+
+#   scale_x_log10()+
+#   geom_line(aes(y = MIGcalcCurve))+
+#   geom_hline(yintercept = MIGcurveData$UpperLimit)
+ 
+
+
+```
 
 
 
@@ -207,6 +248,36 @@ explantDat$Timepoint<-as.factor(explantDat$Timepoint)
 #   group_by(Sample, Assay, Donor, Timepoint,Virus, Detection.Range)%>%
 #   summarize(avgConc = mean(Calc..Concentration))
 ```
+## Caveats
+
+Some data points were above the range of the curve fit. The MSD software can extrapolate values for these if the curve is linear at the top. Values cannot be extrapolated when the data was below the fit curve range, so those are not shown in the following plots. 
+
+
+
+
+
+```{r everything, echo=FALSE, warning=FALSE, message= FALSE}
+
+
+ggplot(explantDat, aes(x = Virus, y = Calc..Concentration))+
+  
+  geom_point(aes(color = Assay, shape = Detection.Range ),size = 1.5)+
+  
+  scale_shape_manual(values = c("Above Fit Curve Range" = 1, "Below Fit Curve Range" = 1, "In Detection Range" = 16))+
+  
+  scale_y_log10()+
+  
+  labs( y = "Concentration")+
+  
+  facet_wrap(Timepoint~Donor, scales = "free_x")+
+  
+  theme(axis.text.x = element_text(angle = 25, size = 9))+
+
+  ggtitle("Data from all analytes")
+
+
+```
+
 
 
 ```{r MIG, echo=FALSE, warning=FALSE, message= FALSE}
@@ -221,7 +292,7 @@ MIGexplantDat<- explantDat %>%
 
 ggplot(data = MIGexplantDat, aes(x = Virus, y = Calc..Concentration))+
   
-  geom_point(aes(color = Donor, shape = Detection.Range ),size = 1, alpha = 0.5 )+
+  geom_point(aes(color = Donor, shape = Detection.Range ),size = 1, alpha = 0.5, position = position_swarm(0.5) )+
   
   stat_summary(aes(group = Donor, color = Donor),fun.y = mean, geom = "point", size = 2)+
   
@@ -234,40 +305,14 @@ ggplot(data = MIGexplantDat, aes(x = Virus, y = Calc..Concentration))+
   
   labs( y = "Concentration")+
   
-  facet_wrap(~Timepoint)+
+  facet_wrap(Timepoint ~ Donor, scales = "free_x")+
   
   theme(axis.text.x = element_text(angle = 25))+
   ggtitle("MIG data")
 
 
-```
-
-Another way of looking at the data
-
-```{r MIG alternate, echo=FALSE, warning=FALSE, message= FALSE}
-
-ggplot(data = MIGexplantDat, aes(x = Timepoint, y = Calc..Concentration))+
-  
-  geom_point(aes(color = Donor, shape = Detection.Range ),size = 1, alpha = 0.5 )+
-  
-  stat_summary(aes(group = Donor, color = Donor),fun.y = mean, geom = "point", size = 2)+
-  
-  #stat_summary(aes(group = Donor, color = Donor), fun.y =mean, geom = "line")+
-
-  
-  scale_shape_manual(values = c("Above Fit Curve Range" = 1, "In Detection Range" = 16))+
-  
-  scale_y_log10()+
-  
-  labs( y = "Concentration")+
-  
-  facet_wrap(~Virus)+
-  
-  theme(axis.text.x = element_text(angle = 25))+
-  ggtitle("MIG data")
 
 ```
-
 
 ```{r RANTES, echo=FALSE, warning=FALSE, message= FALSE}
 #RANTES
@@ -277,7 +322,7 @@ RANTESexplantDat<- explantDat %>%
 
 ggplot(data = RANTESexplantDat, aes(x = Virus, y = Calc..Concentration))+
   
-  geom_point(aes(color = Donor, shape = Detection.Range ),size = 1, alpha = 0.5 )+
+  geom_point(aes(color = Donor, shape = Detection.Range ),size = 1, alpha = 0.5, position = position_swarm(0.5) )+
   
   stat_summary(aes(group = Donor, color = Donor),fun.y = mean, geom = "point", size = 2)+
   
@@ -290,7 +335,7 @@ ggplot(data = RANTESexplantDat, aes(x = Virus, y = Calc..Concentration))+
   
   labs( y = "Concentration")+
   
-  facet_wrap(~Timepoint)+
+  facet_wrap(Timepoint ~ Donor, scales = "free_x")+
   
   theme(axis.text.x = element_text(angle = 25))+
   ggtitle("RANTES data")
@@ -298,29 +343,6 @@ ggplot(data = RANTESexplantDat, aes(x = Virus, y = Calc..Concentration))+
 
 ```
 
-
-
-```{r RANTES alternate, echo=FALSE, warning=FALSE, message= FALSE}
-
-ggplot(data = RANTESexplantDat, aes(x = Timepoint, y = Calc..Concentration))+
-  
-  geom_point(aes(color = Donor, shape = Detection.Range ),size = 1, alpha = 0.5 )+
-  
-  stat_summary(aes(group = Donor, color = Donor),fun.y = mean, geom = "point", size = 2)+
-  
-  #stat_summary(aes(group = Donor, color = Donor), fun.y =mean, geom = "line")+
-
-  
-  scale_shape_manual(values = c("Above Fit Curve Range" = 1, "Below Fit Curve Range" = 1, "In Detection Range" = 16))+
-  
-  scale_y_log10()+
-  
-  labs( y = "Concentration")+
-  
-  facet_wrap(~Virus)+
-  ggtitle("RANTES data")
-
-```
 
 
 
@@ -332,7 +354,7 @@ IL1RAexplantDat<- explantDat %>%
 
 ggplot(data = IL1RAexplantDat, aes(x = Virus, y = Calc..Concentration))+
   
-  geom_point(aes(color = Donor, shape = Detection.Range ),size = 1, alpha = 0.5 )+
+  geom_point(aes(color = Donor, shape = Detection.Range ),size = 1, alpha = 0.5, position = position_swarm(0.5) )+
   
   stat_summary(aes(group = Donor, color = Donor),fun.y = mean, geom = "point", size = 2)+
   
@@ -345,7 +367,7 @@ ggplot(data = IL1RAexplantDat, aes(x = Virus, y = Calc..Concentration))+
   
   labs( y = "Concentration")+
   
-  facet_wrap(~Timepoint)+
+  facet_wrap(Timepoint ~ Donor, scales = "free_x")+
   
   theme(axis.text.x = element_text(angle = 25))+
   ggtitle("IL1-RA data")
@@ -353,25 +375,3 @@ ggplot(data = IL1RAexplantDat, aes(x = Virus, y = Calc..Concentration))+
 
 ```
 
-
-
-```{r IL1RA alternate, echo=FALSE, warning=FALSE, message= FALSE}
-
-ggplot(data = IL1RAexplantDat, aes(x = Timepoint, y = Calc..Concentration))+
-  
-  geom_point(aes(color = Donor, shape = Detection.Range ),size = 1, alpha = 0.5 )+
-  
-  stat_summary(aes(group = Donor, color = Donor),fun.y = mean, geom = "point", size = 2)+
-  
-  #stat_summary(aes(group = Donor, color = Donor), fun.y =mean, geom = "line")+
-
-  
-  scale_shape_manual(values = c("Above Fit Curve Range" = 1, "Below Fit Curve Range" = 1, "In Detection Range" = 16))+
-  
-  scale_y_log10()+
-  
-  labs( y = "Concentration")+
-  
-  facet_wrap(~Virus)+
-  ggtitle("IL1RA data")
-```
