@@ -70,6 +70,7 @@ dat<- dat %>%
 
 dat <- dat %>%
   filter(Sample != "Diluted Stock Calibrator" & Sample != "Blended Working Stock")
+
 ```
 
 
@@ -141,31 +142,70 @@ pander(rSquared)
 
 
 ```{r standard curves, echo=FALSE, warning=FALSE, message= FALSE}
+#according to MSD instructions, the lower detection limit for the standards (in signal units) is the signal for the lower calibrator + (statistical factor * multiplier)
 
-# standardCurve<- function (Calc.Top, Calc.Bottom, Calc.HillSlope, Calc.Midpoint, Concentration){
+
+# upper limit is calculated this way: upper plateau of standard curve - (multiplier x statistical factor). The upper plateau value is in the "Algorithm Parameter Calc Top" column.
+
+#the statistical factor used can be found in the "Detection limits bottom of range type" column and the multiplier can  be found in the "Detection limits bottom of range parameter" column
+
+
+#for the 4PL curve, std deviation is the statistical factor used for both limits.
+
+
+
+
+
+# LowerLimits <-standards %>%
+#   group_by(Assay)%>%
+#   filter(Sample == "STD-08")%>%
+#   summarize(LowerLimit = unique(Mean + (Std..Deviation * Detection.Limits..Bottom.of.Range.Parameter)))
 # 
-# Calc.Top + (Calc.Bottom - Calc.Top/(1+(Concentration/Calc.Midpoint)^Calc.HillSlope))
-# }
+# UpperLimits<- standards %>%
+#   group_by(Assay)%>%
+#   summarise(UpperLimit = unique(Algorithm.Parameter..Calc..Top - (Std..Deviation * Detection.Limits..Top.of.Range.Parameter)))
+# 
+# standards<-merge(standards,LowerLimits, by = "Assay")
+# 
+# standards<- merge(standards, UpperLimits, by = "Assay")
 # 
 # 
-# MIGcurveData <- standards%>%
-#   filter(Assay == "MIG") %>%
-#   mutate(UpperLimit = Algorithm.Parameter..Calc..Top-( Detection.Limits..Top.of.Range.Parameter * Std..Deviation ))%>%
-#   mutate(LowerLimit = min(Concentration)+(2.5 * Std..Deviation ))
 # 
+# MIGstandards<- filter(standards, Assay == "MIG")
 # 
-# 
-# MIGcalcCurve <- standardCurve(MIGcurveData$Algorithm.Parameter..Calc..Top,MIGcurveData$Algorithm.Parameter..Calc..Bottom, MIGcurveData$Algorithm.Parameter..Calc..HillSlope, MIGcurveData$Algorithm.Parameter..Calc..MidPoint, MIGcurveData$Concentration)
-# 
-# 
-# ggplot(MIGcurveData, aes(x = Concentration, y = Signal))+
+# MIGstandards%>%
+#   ggplot(aes(x = Concentration, y = Signal))+
 #   geom_point()+
 #   scale_y_log10()+
 #   scale_x_log10()+
-#   geom_line(aes(y = MIGcalcCurve))+
-#   geom_hline(yintercept = MIGcurveData$UpperLimit)
- 
-
+#   geom_hline(yintercept = MIGstandards$UpperLimit[1])+
+#   geom_hline(yintercept = MIGstandards$LowerLimit[1])+
+#   ggtitle("MIG")
+#   
+# 
+# RANTESstandards<- filter(standards, Assay == "RANTES")
+# 
+# RANTESstandards%>%
+#   filter(Assay == "RANTES")%>%
+#   ggplot(aes(x = Concentration, y = Signal))+
+#   geom_point()+
+#   scale_y_log10()+
+#   scale_x_log10()+
+#   geom_hline(yintercept = RANTESstandards$UpperLimit[1])+
+#   geom_hline(yintercept = RANTESstandards$LowerLimit[1])+
+#   ggtitle("RANTES")
+# 
+# IL1RAstandards<-filter(standards, Assay == "IL1-RA")
+# 
+# IL1RAstandards%>%
+#   filter(Assay == "IL1-RA")%>%
+#   ggplot(aes(x = Concentration, y = Signal))+
+#   geom_point()+
+#   scale_y_log10()+
+#   scale_x_log10()+
+#   geom_hline(yintercept = IL1RAstandards$UpperLimit[1])+
+#   geom_hline(yintercept = IL1RAstandards$LowerLimit[1])+
+#   ggtitle("IL1-RA")
 
 ```
 
@@ -182,6 +222,12 @@ explantDat<-dat%>%
 #sanity check: I put 56 samples on the plate and there are 3 analytes so we should have 56 x 3 = 168 samples. 
 
 #We didn't have enough sample to do two replicates for 324-T2-M so we didn't add anything to well F10. We did read the well though, so there is data for it, but I want to exclude it because there wasn't sample there
+
+
+          
+
+
+
 
 explantDat <- explantDat %>%
   filter(Well != "F10") #removes 3 data points, 1 for each analyte so 165 left
@@ -256,7 +302,7 @@ Some data points were above the range of the curve fit. The MSD software can ext
 
 
 
-```{r everything, echo=FALSE, warning=FALSE, message= FALSE}
+```{r all analytes, echo=FALSE, warning=FALSE, message= FALSE}
 
 
 ggplot(explantDat, aes(x = Virus, y = Calc..Concentration))+
@@ -278,6 +324,34 @@ ggplot(explantDat, aes(x = Virus, y = Calc..Concentration))+
 
 ```
 
+
+When we analyzed the explant microarray data, we saw the most obvious differences in gene expression were in V2T3 for donors 323,317,324,318. The only sample that was in this subset that we ran on this plate was 323.
+
+
+```{r subset, echo=FALSE, warning=FALSE, message= FALSE}
+subset <- explantDat %>%
+  filter(Donor!="319" & Donor != "319" & Donor != "327" & Donor!= "326", Timepoint == "T3")
+
+
+
+ggplot(subset, aes(x = Virus, y = Calc..Concentration))+
+  
+  geom_point(aes(color = Assay, shape = Detection.Range ),size = 1.5)+
+  
+  scale_shape_manual(values = c("Above Fit Curve Range" = 1, "Below Fit Curve Range" = 1, "In Detection Range" = 16))+
+  
+  scale_y_log10()+
+  
+  labs( y = "Concentration")+
+  
+  facet_wrap(Timepoint~Donor, scales = "free_x")+
+  
+  theme(axis.text.x = element_text(angle = 25, size = 9))
+
+```
+
+
+Data separated by analyte:
 
 
 ```{r MIG, echo=FALSE, warning=FALSE, message= FALSE}

@@ -123,7 +123,13 @@ Caveats
 
 Some data points were above the range of the curve fit. The MSD software can extrapolate values for these if the curve is linear at the top. Values cannot be extrapolated when the data was below the fit curve range, so those are not shown in the following plots.
 
-![](30June16_plate_3_explant_sup_files/figure-markdown_github/everything-1.png)
+![](30June16_plate_3_explant_sup_files/figure-markdown_github/all%20analytes-1.png)
+
+When we analyzed the explant microarray data, we saw the most obvious differences in gene expression were in V2T3 for donors 323,317,324,318. The only sample that was in this subset that we ran on this plate was 323.
+
+![](30June16_plate_3_explant_sup_files/figure-markdown_github/subset-1.png)
+
+Data separated by analyte:
 
 ![](30June16_plate_3_explant_sup_files/figure-markdown_github/MIG-1.png)
 
