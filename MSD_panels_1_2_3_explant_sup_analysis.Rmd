@@ -1,0 +1,307 @@
+---
+title: "MSD panels 1, 2 and 3 Explant Sup"
+author: "Claire Levy"
+date: "August 12, 2016"
+output: github_document
+---
+
+## Experiment overview
+
+These data are from running MSD analysis of supernatents from selected vaginal explant samples. The explants were infected with HSV2 strains 186, SD90 or Mock infected by Lamar Fleming and Gabriella Fenkart. 
+
+We used 3 different MSD panels containing a total of 20 analytes analyzed for 46 samples(see caveat). Bsaed on results from running test samples, we decided to dilute all the supernants 1:5 with MSD's diluent 43 before running the plates. All samples (except 1, see caveats) were run in duplicate.
+
+Caveats:
+Due to limited sample volume, we had to make the following omissions:
+
+Panel 2: Only 1 rep for sample 324-T2-V1
+
+Panel 3: Did not run samples 324-T2-V1 or 324-T2-V2.
+
+Due to a possible pipetting error, we were not able to use the data from the standards that we ran for panel 1. Instead, we used the standards from a previous run of the same panel to calculate concentrations for the experimental samples(see explant_sup_README for details).
+
+
+```{r data read-in, echo=FALSE, message = FALSE, warning = FALSE}
+
+library(dplyr)
+library(ggplot2)
+library(pander)
+library(reshape2)
+library(stringr)
+
+
+
+#reading in data from the panel 1
+
+
+#remember that this data table contains data from the panel 1-Test from 28Mar16 (Plate_2BF6AAN447). I am only going to use the Standards data from that plate and not the standards from either of the plates for panel 1 run 10Aug16.
+
+
+
+# HOWEVER: When we did panel 1-TEST, the kit that we used was missing the Ab for MIP1B, so we didn't include that one the plate, so we don't have any standard data for that analyte from this plate. So, we will need to use the standard data from the 10Aug16 run of panel 1 for that analyte, or, not use it.
+
+
+
+#annoyingly, for Plate_2BF6AAN447, the standards are not named "STD-01" etc in the sample names column but rather "S001". I'm going to change them to match the other panels.
+
+panel_1 <- read.csv("../raw_data/10Aug16_explant_sup_panel_1_plate_1_and_2.csv", skip = 1)
+
+
+
+TestStdsToUse <- panel_1 %>%
+  filter(Sample.Group == "Standards")%>%
+  filter(Plate.Name == "panel_1_TEST")
+
+#fixing the sample names!
+TestStdsToUse$Sample<-str_replace(TestStdsToUse$Sample, "S0","STD-")
+  
+
+#filtering out just the standards for MIP1B from the 11Aug16 panel 1 plates (don't have data for that analyte in the test panel). The greek letters got all messed up since they went thru excel, but I know which is which based on the Spot (in the well) that they are associated with.
+
+StdsToUse<- panel_1 %>%
+  filter(Sample.Group == "Standards", Spot == "4")
+
+#now filter out all the standards from the panel 1 data and add back in just the standards I want (TestStdsToUse and StdsToUse)
+
+
+panel_1NoStds<-panel_1 %>%
+  filter(Sample.Group != "Standards")
+
+
+panel_1_Stds_corrected <- rbind(panel_1NoStds,StdsToUse,TestStdsToUse )
+
+
+
+# Data from panels 2 and 3
+panel_2<-read.csv("../raw_data/10Aug16_explant_sup_panel_2_plate_1_and_2.csv", skip = 1)
+
+
+panel_3<-read.csv("../raw_data/11Aug16_explant_sup_panel_3_plate_1_and_2.csv", skip = 1)
+
+
+
+#Combining the data from all 3 panels
+
+allPanels<- rbind(panel_1_Stds_corrected, panel_2,panel_3)
+
+```
+
+
+
+
+```{r fixing panel 1 standards, echo=FALSE, message = FALSE, warning = FALSE}
+
+#just the standards from all the panels
+
+##SANITY CHECK
+# panel 1: 8std x 2reps x 1analytes x 2 plates = 32
+# panel 1 TEST: 8std x 2reps x 8analyte x 1plate = 128
+# panel 2: 8std x 2reps x 8analytes x 2 plates = 256
+# panel 3: 8std x 2reps x 3analytes x 2 plates = 96
+
+# 32+128+256+96=512
+
+allPanelsStds<-allPanels %>%
+  filter(Sample.Group == "Standards")%>%
+  group_by(Plate.Name)
+```
+
+
+## Checking Standard Recovery and Curves
+
+Here are plots of the % recovery (extrapolated concentration/ known concentration x 100) for the standards that were either within or above the detection range, with lines at the "good recovery" limits of 80 and 120% recovery.
+
+The R^2 values for goodness-of-fit for the standard curves were all >0.99
+```{r panel 2 and 3 standards, echo=FALSE, message = FALSE, warning = FALSE}
+
+#I want to ignore panel 1 data right now since we might get a better set of standards to use with it.
+
+panel_2_and_3<- rbind(panel_3, panel_2)
+
+panel_2_and_3Stds<-filter(panel_2_and_3, Sample.Group == "Standards")
+
+#which standards are out of det. range?
+standardsOutOfRange<-panel_2_and_3Stds %>%
+  filter(Detection.Range != "In Detection Range")%>%
+  arrange(Plate.Name,Sample, Assay, Detection.Range)%>%
+  select(Plate.Name,Sample, Assay, Detection.Range)
+
+
+stdFit<- panel_2_and_3Stds %>% 
+  arrange(Sample,Assay)%>%
+  filter(Detection.Range != "Below Fit Curve Range")%>%
+  select(Sample, Assay,Detection.Range, X..Recovery,Fit.Statistic..RSquared, Concentration, Calc..Concentration)
+
+
+ggplot(stdFit, aes(x = Sample, y = X..Recovery))+
+  geom_point(aes(color = Sample, shape = Detection.Range ),size = 2, alpha = 0.5)+
+  scale_shape_manual(values = c("Above Fit Curve Range" = 1, "In Detection Range" = 16, "Below Detection Range" = 0))+
+  facet_wrap(~Assay)+
+  theme(axis.text.x = element_text(angle=25))+
+  scale_y_continuous(limits = c(0, 175))+
+  geom_abline(slope = 0, intercept = c(80, 120))+
+  labs(y = "Percent Recovery")+
+  theme(axis.text.x = element_text(size = rel(0.8)))
+
+
+
+#checking the R squared goodness-of-fit for the standard curves
+rSquared<-stdFit%>%
+  group_by(Assay)%>%
+  summarize(R_Squared = mean(Fit.Statistic..RSquared))
+
+
+
+
+```
+
+
+
+```{r clean data, echo=FALSE, message = FALSE, warning = FALSE}
+
+#Making a df that contains just the non-standards 
+
+
+panel_2_and_3_noStds <- panel_2_and_3 %>%
+  filter(Sample.Group!="Standards")
+  
+  
+# I want to be able to group the data by timepoint and donor and virus so I need to separate the sample name and make new columns identifying them that way
+
+
+donorTimeVirus<-colsplit(panel_2_and_3_noStds$Sample,"-", c("Donor","Timepoint","Virus") )
+
+#bind the split col back to panel_2_and_3
+
+panel_2_and_3_noStds<-cbind(donorTimeVirus, panel_2_and_3_noStds)
+
+#Make things factors so they plot nicely
+panel_2_and_3_noStds$Donor <- as.factor(panel_2_and_3_noStds$Donor)
+
+panel_2_and_3_noStds$Calc..Concentration <-as.numeric(panel_2_and_3_noStds$Calc..Concentration)
+
+
+panel_2_and_3_noStds$Virus <- as.factor(panel_2_and_3_noStds$Virus)
+
+panel_2_and_3_noStds$Virus<-factor(panel_2_and_3_noStds$Virus, levels = c("M", "V1","V2"))
+
+panel_2_and_3_noStds$Timepoint<-as.factor(panel_2_and_3_noStds$Timepoint)
+```
+
+
+
+```{r checking reps, echo=FALSE, message = FALSE, warning = FALSE}
+
+#checking to make sure that only the samples that SHOULD have 1 rep, show up as having just 1 rep
+
+replicateSummary <- panel_2_and_3_noStds %>%
+group_by(Plate.Name,Sample, Assay)%>%
+summarize(reps = n())
+
+not2<-filter(replicateSummary,reps!="2")%>%
+  arrange(Sample, Assay)
+
+
+```
+
+
+
+```{r avg reps, echo=FALSE, message = FALSE, warning = FALSE}
+
+#some of the samples had one rep that was below detection, so I am excluding those so I will be able to use the remaining rep as the "average" for that sample.
+
+
+#I am also excluding samples that are "Below Detection Range" because this means that the signal was "statistically indistinguishable from the background or top of the curve"" and ..."The concentrations calculated are inherently unreliable."
+
+#Which were below detection range?
+panel_2_and_3_noStds_Below <- panel_2_and_3_noStds %>%
+  filter(Detection.Range == "Below Fit Curve Range" & Detection.Range != "Below Detection Range")
+
+
+
+panel_2_and_3_noStds_noBelow <- panel_2_and_3_noStds %>%
+  filter(Detection.Range != "Below Fit Curve Range" & Detection.Range != "Below Detection Range")
+
+#averaging the replicates
+avgConcpanel_2_and_3_noStds_noBelow <- panel_2_and_3_noStds_noBelow %>%
+group_by(Sample, Assay, Donor, Timepoint,Virus)%>%
+summarize(avgConc = mean(Calc..Concentration))%>%
+  ungroup()
+
+
+
+
+#Looking at the number of samples in each sample "set"(Same Donor and Timepoint). Some are missing V1 or V2. or both!! I don't want the ones with just one sample in the set.
+
+numberInSets<-avgConcpanel_2_and_3_noStds_noBelow %>%
+         group_by(Donor,Timepoint,Assay)%>%
+  select(Sample,Donor, Timepoint,Assay)%>%
+  summarize(numInSet = n())
+
+
+#now I'll merge the avgConc df with this numberInSets info created above so I can then filter out samples that have <2 samples in the set
+
+avgConcpanel_2_and_3_noStds_noBelow <- merge(avgConcpanel_2_and_3_noStds_noBelow, numberInSets, by = c("Donor", "Timepoint", "Assay"))
+
+
+
+
+
+#now exclude the samples where there not a "full set", i.e. 1 sample only in the set
+
+avgConcpanel_2_and_3_noStds_noBelow_fullSet <- avgConcpanel_2_and_3_noStds_noBelow %>%
+  filter(numInSet != 1)
+
+
+```
+
+
+
+## Plots of analyte concentrations
+
+
+## Caveats
+Samples omitted from the plots include:
+
+* Concentrations below the fit curve range. Values cannot be extrapolated when the data was *below* the fit curve range. However,the MSD software can extrapolate values that are *above* the fit curve range if the curve is linear at the top.
+
+* Samples for which there was only data for a Mock sample and neither of the virus conditions.
+
+
+Also note:
+Some of the samples had one rep that was below detection and another that was above. For these samples I used the remaining rep as the "average" for that sample.
+
+
+```{r  samples plots, echo=FALSE, message = FALSE, warning = FALSE}
+
+#make a list of the analytes
+analyteList<-as.list(levels(avgConcpanel_2_and_3_noStds_noBelow$Assay))
+
+#write a function to make a plot for each analyte
+
+plotAnalytes <- function (Analyte){
+   avgConcpanel_2_and_3_noStds_noBelow_fullSet %>%
+     filter(Assay == Analyte)%>%
+     
+     ggplot( aes(x = Virus, y = avgConc))+
+   
+   geom_point(aes(color = Donor ),size = 1.5)+
+  geom_line(aes(group = Donor, color = Donor)) +
+   
+   scale_shape_manual(values = c("Above Fit Curve Range" = 1, "Below Detection Range" = 1, "In Detection Range" = 16))+
+  
+   scale_y_log10()+
+   
+   labs( y = "Concentration")+
+   
+  facet_wrap(~Timepoint, scales = "free_x")+
+   
+   theme(axis.text.x = element_text(angle = 25, size = 9))+
+     ggtitle(Analyte)
+}
+
+
+lapply(analyteList, FUN = plotAnalytes)
+
+pander(panel_2_and_3_noStds %>%
+  select(Sample, Assay, Calc..Concentration, Detection.Range))
