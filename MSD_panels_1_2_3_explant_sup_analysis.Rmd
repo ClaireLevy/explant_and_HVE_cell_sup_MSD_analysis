@@ -9,7 +9,7 @@ output: github_document
 
 These data are from running MSD analysis of supernatents from selected vaginal explant samples. The explants were infected with HSV2 strains 186, SD90 or Mock infected by Lamar Fleming and Gabriella Fenkart. 
 
-We used 3 different MSD panels containing a total of 20 analytes analyzed for 46 samples(see caveat). Bsaed on results from running test samples, we decided to dilute all the supernants 1:5 with MSD's diluent 43 before running the plates. All samples (except 1, see caveats) were run in duplicate.
+We used 3 different MSD panels containing a total of 20 analytes analyzed for 46 samples (see caveat). Based on results from running test samples, we decided to dilute all the supernants 1:5 with MSD's diluent 43 before running the plates. All samples (except 1, see caveats) were run in duplicate.
 
 ## Caveats
 
@@ -19,7 +19,7 @@ Panel 2: Only 1 rep for sample 324-T2-V1
 
 Panel 3: Did not run samples 324-T2-V1 or 324-T2-V2.
 
-Due to a possible pipetting error, we were not able to use the data from the standards that we ran for panel 1. Instead, we used the standards from a different run of the same panel to calculate concentrations for the experimental samples(see explant_sup_README for details).
+Due to a possible pipetting error, we were not able to use the data from the standards that we ran for panel 1. Instead, we used the standards from a different run of the same panel to calculate concentrations for the experimental samples (see explant_sup_README for details).
 
 
 ```{r data read-in, echo=FALSE, message = FALSE, warning = FALSE}
@@ -93,6 +93,21 @@ explant_panel_3<-read.csv("../raw_data/11Aug16_explant_sup_panel_3_plate_1_and_2
 
 explant_all_panels<- rbind(corrected_Stds_explant_panel_1, explant_panel_2,explant_panel_3)
 
+
+
+
+#fixing the greek letters!!
+explant_all_panels$Assay <-recode(explant_all_panels$Assay,
+                                      "IFN-Î±2a" = paste("IFN-\U03B1","2a", sep = ""),
+                                      "IL-1Î±" = "IL-1\U03B1",
+                                      "MIP-1Î±"="MIP-1\U03B1",
+                                      "TNF-Î±" = "TNF-\U03B1",
+                                      "MIP-3Î±" = "MIP-3\U03B1",
+                                      "MIP-1Î²" = "MIP-1\U03B2",
+                                      "IL-1Î²" = "IL-1\U03B2",
+                                      "IFN-Î³" = "IFNg")
+
+
 ```
 
 
@@ -107,10 +122,12 @@ Here are plots of the % recovery (extrapolated concentration/ known concentratio
 
 The R^2^ values for goodness-of-fit for the standard curves were all >0.99
 
-```{r panel 2 and 3 standards, echo=FALSE, message = FALSE, warning = FALSE}
+```{r standards, echo=FALSE, message = FALSE, warning = FALSE}
 
 
 explant_stds_all_panels<-filter(explant_all_panels, Sample.Group == "Standards")
+
+
 
 #which standards are out of det. range?
 standardsOutOfRange<-explant_stds_all_panels %>%
@@ -164,13 +181,13 @@ rSquared<-explant_stds_all_panels_percent_recov%>%
 
 ## Caveats about Standards
 
-* Standards with values below the detection range (<2.5x the standard deviation of the lowest standard) are give unreliable concentrations, so I did not include those in the plots.
+* Standards with values *below the detection range* (<2.5x the standard deviation of the lowest standard) give unreliable concentrations, so I did not include those in the plots.
 
-* When standards are below the curve fit (outside the range of the standard curve), the software does not calculate concentrations so you can't get a percent recovery.
+* When standards are *below the curve fit* (outside the range of the standard curve), the software does not calculate concentrations so you can't get a percent recovery.
 
 * Most of the Standards that fell into either of these categories were from STD-07 or STD-08 except for two that were STD-06:
 
-`r pander(explant_stds_all_panels_below)r`
+`r pander(explant_stds_all_panels_below)`
 
 
 ```{r break up sample name, echo=FALSE, message = FALSE, warning = FALSE}
@@ -228,15 +245,21 @@ not2<-filter(replicateSummary,reps!="2")%>%
 
 #What number of samples are in each category of detection?
 explant_all_panels_noStds_Below <- explant_all_panels_noStds%>%
- group_by(Assay, Detection.Range)%>%
+  mutate(Panel = ifelse(str_detect(Plate.Name, "panel_1"),"Panel 1",ifelse(str_detect(Plate.Name,"panel_2"),"Panel 2","Panel 3")))%>%
+ group_by(Panel,Assay, Detection.Range)%>%
   summarise(Number_of_Samples = n())
-
+  
+                        
+                        
+                       
 
 #Let's plot that
 
 ggplot(explant_all_panels_noStds_Below, aes(x = Assay, y=Number_of_Samples))+
          geom_point(aes(color = Detection.Range),size = 2)+
   theme(axis.text.x = element_text(angle=25))+
+  labs(y = "Number of Samples", x = "Analyte")+
+  facet_wrap(~Panel, scales = "free")+
   ggtitle("Number of Samples in each Detection Range per Analyte")
 
 ```
@@ -296,18 +319,7 @@ Samples omitted from the plots include:
 
 
 Also note:
-Some of the samples had one rep that was below detection and another that was above. For these samples I used the remaining rep as the "average" for that sample.
-```{r correcting analyte names, echo=FALSE, message = FALSE, warning = FALSE}
-
-#excel messes up the greek letters of the analytes so I'm fixing them here.
-
-#unicode greek lower case alpha = U03B1
-
-
-
-
-```
-
+Some of the samples had one rep that was below detection and another that was in range. For these samples I used the remaining "in range" rep as the "average" for that sample.
 
 
 
@@ -315,7 +327,11 @@ Some of the samples had one rep that was below detection and another that was ab
 ```{r  samples plots, echo=FALSE, message = FALSE, warning = FALSE}
 
 #make a list of the analytes
-analyteList<-as.list(levels(avgConc_explant_all_panels_noStds_noBelow$Assay))
+
+#I'm using a unique vector here instead of the levels of Assay because I don't want to include IFNa2a OR Il-7. There weren't any data points in the detection range for those analytes (so I don't want to try to make a plot of it)
+
+
+analyteList<-as.list(unique(avgConc_explant_all_panels_noStds_noBelow$Assay))
 
 #write a function to make a plot for each analyte
 
@@ -343,6 +359,10 @@ plotAnalytes <- function (Analyte){
 }
 
 
+
 lapply(analyteList, FUN = plotAnalytes)
+
+
 ```
+
 
