@@ -74,7 +74,7 @@ Explant Supernatents: Detection Range
 Plots of analyte concentrations
 -------------------------------
 
-Black points show the means.
+We did a 1:5 dilution of the samples so I multiplied the concentrations by 5 to get an estimate of the stock suparnatent concentration. Black points show the means.
 
 Caveats
 -------
