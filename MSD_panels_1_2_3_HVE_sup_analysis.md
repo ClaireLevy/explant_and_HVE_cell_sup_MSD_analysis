@@ -65,7 +65,7 @@ The following plots show that the 1:2 dilution of the samples resulted in more s
 Plots of analyte concentrations
 -------------------------------
 
-Black points show the means.
+These samples were diluted 1:2 so I multiplied the concentrations by 2 to estimate the stock concentration of the supernatents. Black points show the means.
 
 Caveats
 -------

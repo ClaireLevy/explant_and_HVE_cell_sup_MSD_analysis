@@ -249,8 +249,7 @@ avgConc_HVE_all_panels_noStds_1to2_noBelow_fullSet <- avgConc_HVE_all_panels_noS
 
 
 ## Plots of analyte concentrations
-
-Black points show the means. 
+These samples were diluted 1:2 so I multiplied the concentrations by 2 to estimate the stock concentration of the supernatents. Black points show the means. 
 
 ## Caveats
 Samples omitted from the plots include:
@@ -275,13 +274,21 @@ Some of the samples had one rep that was below detection and another that was in
 
 analyteList<-as.list(unique(avgConc_HVE_all_panels_noStds_1to2_noBelow_fullSet$Assay))
 
+
+#I'm going to make a column for estimated stock concentration by multiplying the avgConc by 2(since I did a 1:2 dilution on the samples) so I can better compare with the HVE sup concentrations.
+
+avgConc_HVE_all_panels_noStds_1to2_noBelow_fullSet <- avgConc_HVE_all_panels_noStds_1to2_noBelow_fullSet %>%
+  mutate (Estimated_Stock_Conc = avgConc * 2)
+
+
+
 #write a function to make a plot for each analyte
 
 plotAnalytes <- function (Analyte){
    avgConc_HVE_all_panels_noStds_1to2_noBelow_fullSet %>%
      filter(Assay == Analyte)%>%
      
-     ggplot( aes(x = Timepoint, y = avgConc))+
+     ggplot( aes(x = Timepoint, y = Estimated_Stock_Conc))+
    
    geom_point(aes(color = Donor ), alpha = 0.5, size = 3)+
   geom_line(aes(group = Donor, color = Donor), alpha = 0.5)+
@@ -292,11 +299,11 @@ plotAnalytes <- function (Analyte){
   
    scale_y_log10()+
    
-   labs( y = "Concentration")+
+   labs( y = "Concentration pg/ml")+
    
   facet_wrap(~Virus, scales = "free_x")+
    
-   theme(axis.text.x = element_text(angle = 25, size = 9))+
+   theme(axis.text.x = element_text(size = 11))+
      ggtitle(Analyte)
 }
 
