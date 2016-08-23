@@ -80,8 +80,6 @@ All Samples Estimated Stock Concentrations
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/all%20sample%20concentrations-1.png)
 
-    ## facet_wrap(Virus)
-
 Plots of analyte concentrations
 -------------------------------
 
@@ -96,6 +94,6 @@ Samples omitted from the plots include:
 
 -   Samples for which there was only data for a Mock sample and neither of the virus conditions.
 
-Also note: Some of the samples had one rep that was below detection and another that was in range. For these samples I used the remaining "in range" rep as the "average" for that sample.
+Also note: If a sample had one rep that was below detection and another that was in range, I used the remaining "in range" rep as the "average" for that sample.
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/individual%20analyte%20plots-1.png)

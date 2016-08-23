@@ -50,7 +50,8 @@ HVE_all_panels$Assay <-recode(HVE_all_panels$Assay,
                                       "MIP-3Î±" = "MIP-3\U03B1",
                                       "MIP-1Î²" = "MIP-1\U03B2",
                                       "IL-1Î²" = "IL-1\U03B2",
-                                      "IFN-Î³" = "IFNg")
+                                      "IFN-Î³" = "IFNg",
+                              "MIG/CXCL9" = "MIG")
 
 
 
@@ -169,7 +170,7 @@ HVE_all_panels_noStds$Sample_Dilution<-as.factor(HVE_all_panels_noStds$Sample_Di
 
 The following plots show that the 1:2 dilution of the samples resulted in more samples being in "In Detection Range." 
 
-```{r checking detection range, echo=FALSE, message = FALSE, warning = FALSE}
+```{r checking detection range,fig.height = 6, fig.width = 10, echo=FALSE, message = FALSE, warning = FALSE}
 
 #What number of samples are in each category of detection? Also adding a column to differentiate which analyte is in which panel, mostly for facetting reasons.
 
@@ -293,11 +294,11 @@ Also note:
 If a sample had one rep that was below detection and another that was in range, I used the remaining "in range" rep as the "average" for that sample.
 
 
-```{r  individual analyte plots , echo=FALSE, message = FALSE, warning = FALSE}
+```{r  individual analyte plots,fig.width = 8, fig.height= 13 , echo=FALSE, message = FALSE, warning = FALSE}
 
 
 ggplot(avgConc_HVE_all_panels_noStds_1to2_noBelow_fullSet, aes(x = Timepoint, y = avgEstConc))+
-   geom_point(aes(color = Donor), alpha = 0.75, size = 2)+
+   geom_point(aes(color = Donor), alpha = 0.75, size = 3)+
   scale_y_log10()+
    labs( y = "Estimated Stock Concentration pg/ml")+
    facet_grid(Assay~Virus, scales = "free_x")+

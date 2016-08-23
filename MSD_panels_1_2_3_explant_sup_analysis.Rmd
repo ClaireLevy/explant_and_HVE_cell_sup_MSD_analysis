@@ -106,7 +106,8 @@ explant_all_panels$Assay <-recode(explant_all_panels$Assay,
                                       "MIP-3Î±" = "MIP-3\U03B1",
                                       "MIP-1Î²" = "MIP-1\U03B2",
                                       "IL-1Î²" = "IL-1\U03B2",
-                                      "IFN-Î³" = "IFNg")
+                                      "IFN-Î³" = "IFNg",
+                                  "MIG/CXCL9" = "MIG")
 
 
 
@@ -247,7 +248,7 @@ not2<-filter(replicateSummary,reps!="2")%>%
 ## Explant Supernatents: Detection Range
 
 
-```{r checking detection range, echo=FALSE, message = FALSE, warning = FALSE}
+```{r checking detection range,fig.height = 5, fig.width = 10, echo=FALSE, message = FALSE, warning = FALSE}
 
 
 #What number of samples are in each category of detection?
@@ -263,7 +264,7 @@ explant_all_panels_noStds_NumInEach <- explant_all_panels_noStds%>%
 
 ggplot(explant_all_panels_noStds_NumInEach, aes(x = Assay, y=Number_of_Samples))+
          geom_point(aes(color = Detection.Range),size = 2)+
-  theme(axis.text.x = element_text(angle=25, size = 7))+
+  theme(axis.text.x = element_text(angle=25, size = 8))+
   labs(y = "Number of Samples", x = "Analyte")+
   facet_wrap(~Panel, scales = "free")+
   ggtitle("Number of Samples in each Detection Range per Analyte")
@@ -351,7 +352,7 @@ avgConc_explant_all_panels_noStds_noBelow_fullSet <- avgConc_explant_all_panels_
 
 ## Plots of analyte concentrations
 
-We did a 1:5 dilution of the samples so I multiplied the concentrations by 5 to get an estimate of the stock suparnatent concentration. Black points show the means. 
+We did a 1:5 dilution of the samples so I multiplied the concentrations by 5 to get an estimate of the stock suparnatent concentration. 
 
 ## Caveats
 Samples omitted from the plots include:
@@ -366,10 +367,10 @@ If a sample had one rep that was below detection and another that was in range, 
 
 
 
-```{r  individual analyte plots, echo=FALSE, message = FALSE, warning = FALSE}
+```{r  individual analyte plots, fig.width = 8, fig.height= 13, echo=FALSE}
 
 ggplot(avgConc_explant_all_panels_noStds_noBelow_fullSet, aes(x = Timepoint, y = avgEstConc))+
-   geom_point(aes(color = Donor),position = position_swarm(0.07), alpha = 0.75, size = 1.5)+
+   geom_point(aes(color = Donor),position = position_swarm(0.1), alpha = 0.75, size = 3)+
   scale_y_log10()+
    labs( y = "Estimated Stock Concentration pg/ml")+
    facet_grid(Assay~Virus, scales = "free_x")+
