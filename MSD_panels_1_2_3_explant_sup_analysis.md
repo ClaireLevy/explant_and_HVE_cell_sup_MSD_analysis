@@ -6,7 +6,7 @@ August 12, 2016
 Experiment overview
 -------------------
 
-These data are from running MSD analysis of supernatents from selected vaginal explant samples. The explants were infected with HSV2 strains 186, SD90 or Mock infected by Lamar Fleming and Gabriella Fenkart.
+These data are from running MSD analysis of supernatents from selected vaginal explant samples from seven donors. The explants were infected with HSV2 strains 186, SD90 or Mock infected by Lamar Fleming and Gabriella Fenkart and supernatents were collected at 3 timepoints post infection: 3hrs, 8hrs and 24hrs.
 
 We used 3 different MSD panels containing a total of 20 analytes analyzed for 46 samples (see caveat). Based on results from running test samples, we decided to dilute all the supernants 1:5 with MSD's diluent 43 before running the plates. All samples (except 1, see caveats) were run in duplicate.
 
@@ -87,91 +87,91 @@ Samples omitted from the plots include:
 
 Also note: Some of the samples had one rep that was below detection and another that was in range. For these samples I used the remaining "in range" rep as the "average" for that sample.
 
-    ## $`10`
+    ## [[1]]
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-1.png)
 
     ## 
-    ## $`11`
+    ## [[2]]
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-2.png)
 
     ## 
-    ## $`2`
+    ## [[3]]
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-3.png)
 
     ## 
-    ## $`3`
+    ## [[4]]
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-4.png)
 
     ## 
-    ## $`13`
+    ## [[5]]
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-5.png)
 
     ## 
-    ## $`15`
+    ## [[6]]
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-6.png)
 
     ## 
-    ## $`16`
+    ## [[7]]
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-7.png)
 
     ## 
-    ## $`18`
+    ## [[8]]
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-8.png)
 
     ## 
-    ## $`6`
+    ## [[9]]
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-9.png)
 
     ## 
-    ## $`19`
+    ## [[10]]
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-10.png)
 
     ## 
-    ## $`7`
+    ## [[11]]
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-11.png)
 
     ## 
-    ## $`8`
+    ## [[12]]
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-12.png)
 
     ## 
-    ## $`20`
+    ## [[13]]
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-13.png)
 
     ## 
-    ## $`17`
+    ## [[14]]
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-14.png)
 
     ## 
-    ## $`12`
+    ## [[15]]
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-15.png)
 
     ## 
-    ## $`14`
+    ## [[16]]
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-16.png)
 
     ## 
-    ## $`4`
+    ## [[17]]
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-17.png)
 
     ## 
-    ## $`9`
+    ## [[18]]
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-18.png)

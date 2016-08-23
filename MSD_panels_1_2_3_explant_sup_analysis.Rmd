@@ -7,7 +7,7 @@ output: github_document
 
 ## Experiment overview
 
-These data are from running MSD analysis of supernatents from selected vaginal explant samples. The explants were infected with HSV2 strains 186, SD90 or Mock infected by Lamar Fleming and Gabriella Fenkart. 
+These data are from running MSD analysis of supernatents from selected vaginal explant samples from seven donors. The explants were infected with HSV2 strains 186, SD90 or Mock infected by Lamar Fleming and Gabriella Fenkart and supernatents were collected at 3 timepoints post infection: 3hrs, 8hrs and 24hrs.
 
 We used 3 different MSD panels containing a total of 20 analytes analyzed for 46 samples (see caveat). Based on results from running test samples, we decided to dilute all the supernants 1:5 with MSD's diluent 43 before running the plates. All samples (except 1, see caveats) were run in duplicate.
 
@@ -108,6 +108,11 @@ explant_all_panels$Assay <-recode(explant_all_panels$Assay,
                                       "IFN-Î³" = "IFNg")
 
 
+
+#Just keep the columns that I care about
+
+explant_all_panels <- explant_all_panels %>%
+  select(Assay,Sample, Sample.Group, Plate.Name, X..Recovery, Concentration, Calc..Concentration, Detection.Range, Fit.Statistic..RSquared,Spot)
 ```
 
 
@@ -115,7 +120,6 @@ explant_all_panels$Assay <-recode(explant_all_panels$Assay,
 
 
 ## Checking Standard Recovery and Curves
-
 
 
 Here are plots of the % recovery (extrapolated concentration/ known concentration x 100) for the standards that were either within or above the detection range, with lines at the "good recovery" limits of 80 and 120% recovery.
@@ -194,7 +198,6 @@ rSquared<-explant_stds_all_panels_percent_recov%>%
 
 #Making a df that contains just the non-standards 
 
-
 explant_all_panels_noStds <- explant_all_panels %>%
   filter(Sample.Group!="Standards")
   
@@ -250,14 +253,13 @@ explant_all_panels_noStds_Below <- explant_all_panels_noStds%>%
   summarise(Number_of_Samples = n())
   
                         
-                        
                        
 
 #Let's plot that
 
 ggplot(explant_all_panels_noStds_Below, aes(x = Assay, y=Number_of_Samples))+
          geom_point(aes(color = Detection.Range),size = 2)+
-  theme(axis.text.x = element_text(angle=25))+
+  theme(axis.text.x = element_text(angle=25, size = 8))+
   labs(y = "Number of Samples", x = "Analyte")+
   facet_wrap(~Panel, scales = "free")+
   ggtitle("Number of Samples in each Detection Range per Analyte")
@@ -341,7 +343,7 @@ plotAnalytes <- function (Analyte){
      
      ggplot( aes(x = Timepoint, y = avgConc))+
    
-   geom_point(aes(color = Donor ),size = 1.5, alpha = 0.5)+
+   geom_point(aes(color = Donor ), alpha = 0.5, size = 3)+
   geom_line(aes(group = Donor, color = Donor), alpha = 0.5)+
     stat_summary(fun.y = mean, geom = "point")+
     stat_summary(fun.y = mean, geom = "line",aes(group = 1))+
