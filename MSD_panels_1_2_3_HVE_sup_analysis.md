@@ -58,14 +58,23 @@ Caveats about Standards
 HVE Supernatents: Detection Range
 ---------------------------------
 
-The following plots show that the 1:2 dilution of the samples resulted in more samples being in "In Detection Range." Going forward I'll only show data from the 1:2 dilutions.
+The following plots show that the 1:2 dilution of the samples resulted in more samples being in "In Detection Range."
 
 ![](MSD_panels_1_2_3_HVE_sup_analysis_files/figure-markdown_github/checking%20detection%20range-1.png)
+
+All Samples Estimated Stock Concentrations
+------------------------------------------
+
+-   I multiplied by the dilution factors so this is an estimated concentration of the stock samples.
+
+-   Note that this is on a log(10) scale; most concentrations are a lot lower than the high ones.
+
+![](MSD_panels_1_2_3_HVE_sup_analysis_files/figure-markdown_github/all%20sample%20concentrations-1.png)
 
 Plots of analyte concentrations
 -------------------------------
 
-These samples were diluted 1:2 so I multiplied the concentrations by 2 to estimate the stock concentration of the supernatents. Black points show the means.
+Since the 1:2 diluted samples were more likely to be in the detection range, I am only showing data for those.
 
 Caveats
 -------
@@ -76,68 +85,6 @@ Samples omitted from the plots include:
 
 -   Samples for which there was only data for a Mock sample and neither of the virus conditions.
 
-Also note: Some of the samples had one rep that was below detection and another that was in range. For these samples I used the remaining "in range" rep as the "average" for that sample.
+Also note: If a sample had one rep that was below detection and another that was in range, I used the remaining "in range" rep as the "average" for that sample.
 
-    ## [[1]]
-
-![](MSD_panels_1_2_3_HVE_sup_analysis_files/figure-markdown_github/samples%20plots-1.png)
-
-    ## 
-    ## [[2]]
-
-![](MSD_panels_1_2_3_HVE_sup_analysis_files/figure-markdown_github/samples%20plots-2.png)
-
-    ## 
-    ## [[3]]
-
-![](MSD_panels_1_2_3_HVE_sup_analysis_files/figure-markdown_github/samples%20plots-3.png)
-
-    ## 
-    ## [[4]]
-
-![](MSD_panels_1_2_3_HVE_sup_analysis_files/figure-markdown_github/samples%20plots-4.png)
-
-    ## 
-    ## [[5]]
-
-![](MSD_panels_1_2_3_HVE_sup_analysis_files/figure-markdown_github/samples%20plots-5.png)
-
-    ## 
-    ## [[6]]
-
-![](MSD_panels_1_2_3_HVE_sup_analysis_files/figure-markdown_github/samples%20plots-6.png)
-
-    ## 
-    ## [[7]]
-
-![](MSD_panels_1_2_3_HVE_sup_analysis_files/figure-markdown_github/samples%20plots-7.png)
-
-    ## 
-    ## [[8]]
-
-![](MSD_panels_1_2_3_HVE_sup_analysis_files/figure-markdown_github/samples%20plots-8.png)
-
-    ## 
-    ## [[9]]
-
-![](MSD_panels_1_2_3_HVE_sup_analysis_files/figure-markdown_github/samples%20plots-9.png)
-
-    ## 
-    ## [[10]]
-
-![](MSD_panels_1_2_3_HVE_sup_analysis_files/figure-markdown_github/samples%20plots-10.png)
-
-    ## 
-    ## [[11]]
-
-![](MSD_panels_1_2_3_HVE_sup_analysis_files/figure-markdown_github/samples%20plots-11.png)
-
-    ## 
-    ## [[12]]
-
-![](MSD_panels_1_2_3_HVE_sup_analysis_files/figure-markdown_github/samples%20plots-12.png)
-
-    ## 
-    ## [[13]]
-
-![](MSD_panels_1_2_3_HVE_sup_analysis_files/figure-markdown_github/samples%20plots-13.png)
+![](MSD_panels_1_2_3_HVE_sup_analysis_files/figure-markdown_github/individual%20analyte%20plots%20-1.png)

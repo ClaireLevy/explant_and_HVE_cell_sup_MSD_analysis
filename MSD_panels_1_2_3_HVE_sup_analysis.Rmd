@@ -20,11 +20,7 @@ library(ggplot2)
 library(pander)
 library(reshape2)
 library(stringr)
-
-
-
-
-
+library(swarm)
 
 #panel 1
 # 128 wells x 9 analytes = 1152 obs
@@ -62,6 +58,7 @@ HVE_all_panels$Assay <-recode(HVE_all_panels$Assay,
 
 HVE_all_panels <- HVE_all_panels %>%
   select(Assay,Sample, Sample.Group, Plate.Name, X..Recovery, Concentration, Calc..Concentration, Detection.Range, Fit.Statistic..RSquared,Spot)
+
 ```
 
 ## Checking Standard Recovery and Curves
@@ -170,26 +167,22 @@ HVE_all_panels_noStds$Sample_Dilution<-as.factor(HVE_all_panels_noStds$Sample_Di
 
 ## HVE Supernatents: Detection Range
 
-The following plots show that the 1:2 dilution of the samples resulted in more samples being in "In Detection Range." Going forward I'll only show data from the 1:2 dilutions.
-
+The following plots show that the 1:2 dilution of the samples resulted in more samples being in "In Detection Range." 
 
 ```{r checking detection range, echo=FALSE, message = FALSE, warning = FALSE}
-
 
 #What number of samples are in each category of detection? Also adding a column to differentiate which analyte is in which panel, mostly for facetting reasons.
 
 
-HVE_all_panels_noStds_Below <- HVE_all_panels_noStds%>%
+HVE_all_panels_noStds_NumInEach <- HVE_all_panels_noStds%>%
   mutate(Panel = ifelse(str_detect(Plate.Name, "panel_1"),"Panel 1",ifelse(str_detect(Plate.Name,"panel_2"),"Panel 2","Panel 3")))%>%
  group_by(Plate.Name,Sample_Dilution,Panel,Assay, Detection.Range)%>%
   summarise(Number_of_Samples = n())
   
                         
-                       
-
 #Let's plot that
 
-ggplot(HVE_all_panels_noStds_Below, aes(x = Assay, y=Number_of_Samples))+
+ggplot(HVE_all_panels_noStds_NumInEach, aes(x = Assay, y=Number_of_Samples))+
          geom_point(aes(color = Detection.Range),size = 2)+
   theme(axis.text.x = element_text(angle=25, size = 8))+
   labs(y = "Number of Samples", x = "Analyte")+
@@ -199,30 +192,67 @@ ggplot(HVE_all_panels_noStds_Below, aes(x = Assay, y=Number_of_Samples))+
 
 
 
+```{r multiplying by dilution factor, echo=FALSE, message = FALSE, warning = FALSE}
+
+#I'm going to make a column for estimated stock concentration by multiplying the avgConc by 2 or 5 (since I did a 1:2 and 1:5 dilution on the samples) so I can better compare with the explant sup concentrations.
+
+HVE_all_panels_noStds <- HVE_all_panels_noStds%>%
+  mutate(Estimated_Stock_Conc = ifelse(
+    Sample_Dilution == "1:2", Calc..Concentration * 2,
+    ifelse(Sample_Dilution == "1:5", Calc..Concentration *5, NA)
+  ))
+
+```
+
+
+
+
+```{r exclude belows, echo=FALSE, message = FALSE, warning = FALSE}
+
+#I am excluding samples that are "Below Detection Range" because this means that the signal was "statistically indistinguishable from the background or top of the curve"" and ..."The concentrations calculated are inherently unreliable." If one of two reps fell into either of these categories, the remaining replicate will serve as the "average" for that sample.
+
+HVE_all_panels_noStds_noBelow <- HVE_all_panels_noStds %>%
+  filter(Detection.Range != "Below Fit Curve Range" & Detection.Range != "Below Detection Range")
+```
+
+## All Samples Estimated Stock Concentrations
+
+* I multiplied by the dilution factors so this is an estimated concentration of the stock samples.
+
+* Note that this is on a log(10) scale; most concentrations are a lot lower than the high ones.
+
+```{r  all sample concentrations, echo=FALSE, message = FALSE, warning = FALSE}
+
+#Plot of all samples and their concentrations
+
+ggplot(HVE_all_panels_noStds_noBelow,aes( x = Timepoint, y = Estimated_Stock_Conc))+
+         geom_point(aes(color = Assay),position = position_swarm (0.5),size = 2)+
+  scale_y_log10()+
+  labs(y = "Estimated Stock Concentration pg/ml")+
+  facet_wrap(~Virus)
+
+
+```
+
+
+
+
+```{r filter for 1:2, echo=FALSE, message = FALSE, warning = FALSE}
+### NOTE ### I'm going to filter for just the 1:2 dilution samples here since they gave more in-detection.
+
+HVE_all_panels_noStds_1to2_noBelow<-HVE_all_panels_noStds_noBelow %>%
+  filter(Sample_Dilution =="1:2")
+
+```
 
 
 ```{r avg reps, echo=FALSE, message = FALSE, warning = FALSE}
 
 
-### NOTE ### I'm going to filter for just the 1:2 dilution samples here since they gave more in-detection.
-
-HVE_all_panels_noStds_1to2<-HVE_all_panels_noStds %>%
-  filter(Sample_Dilution =="1:2")
-
-
-
-#I am excluding samples that are "Below Detection Range" because this means that the signal was "statistically indistinguishable from the background or top of the curve"" and ..."The concentrations calculated are inherently unreliable." If one of two reps fell into either of these categories, the remaining replicate will serve as the "average" for that sample.
-
-HVE_all_panels_noStds_1to2_noBelow <- HVE_all_panels_noStds_1to2 %>%
-  filter(Detection.Range != "Below Fit Curve Range" & Detection.Range != "Below Detection Range")
-
-
-
-
 #averaging the replicates
 avgConc_HVE_all_panels_noStds_1to2_noBelow <- HVE_all_panels_noStds_1to2_noBelow %>%
 group_by(Sample, Assay, Donor, Timepoint,Virus)%>%
-summarize(avgConc = mean(Calc..Concentration))%>%
+summarize(avgEstConc = mean(Estimated_Stock_Conc))%>%
   ungroup()
 
 
@@ -249,7 +279,7 @@ avgConc_HVE_all_panels_noStds_1to2_noBelow_fullSet <- avgConc_HVE_all_panels_noS
 
 
 ## Plots of analyte concentrations
-These samples were diluted 1:2 so I multiplied the concentrations by 2 to estimate the stock concentration of the supernatents. Black points show the means. 
+Since the 1:2 diluted samples were more likely to be in the detection range, I am only showing data for those.
 
 ## Caveats
 Samples omitted from the plots include:
@@ -260,56 +290,58 @@ Samples omitted from the plots include:
 
 
 Also note:
-Some of the samples had one rep that was below detection and another that was in range. For these samples I used the remaining "in range" rep as the "average" for that sample.
+If a sample had one rep that was below detection and another that was in range, I used the remaining "in range" rep as the "average" for that sample.
+
+
+```{r  individual analyte plots , echo=FALSE, message = FALSE, warning = FALSE}
+
+
+ggplot(avgConc_HVE_all_panels_noStds_1to2_noBelow_fullSet, aes(x = Timepoint, y = avgEstConc))+
+   geom_point(aes(color = Donor), alpha = 0.75, size = 2)+
+  scale_y_log10()+
+   labs( y = "Estimated Stock Concentration pg/ml")+
+   facet_grid(Assay~Virus, scales = "free_x")+
+   theme(axis.text.x = element_text(size = 11))
 
 
 
-
-```{r  samples plots, echo=FALSE, message = FALSE, warning = FALSE}
+################## another way of making the plots #########
 
 #make a list of the analytes
 
 #I'm using a unique vector here instead of the levels of Assay because I don't want to include IFNa2a OR Il-7. There weren't any data points in the detection range for those analytes (so I don't want to try to make a plot of it)
 
 
-analyteList<-as.list(unique(avgConc_HVE_all_panels_noStds_1to2_noBelow_fullSet$Assay))
+# analyteList<-as.list(unique(avgConc_HVE_all_panels_noStds_1to2_noBelow_fullSet$Assay))
 
 
-#I'm going to make a column for estimated stock concentration by multiplying the avgConc by 2(since I did a 1:2 dilution on the samples) so I can better compare with the HVE sup concentrations.
-
-avgConc_HVE_all_panels_noStds_1to2_noBelow_fullSet <- avgConc_HVE_all_panels_noStds_1to2_noBelow_fullSet %>%
-  mutate (Estimated_Stock_Conc = avgConc * 2)
-
-
-
-#write a function to make a plot for each analyte
-
-plotAnalytes <- function (Analyte){
-   avgConc_HVE_all_panels_noStds_1to2_noBelow_fullSet %>%
-     filter(Assay == Analyte)%>%
-     
-     ggplot( aes(x = Timepoint, y = Estimated_Stock_Conc))+
-   
-   geom_point(aes(color = Donor ), alpha = 0.5, size = 3)+
-  geom_line(aes(group = Donor, color = Donor), alpha = 0.5)+
-    stat_summary(fun.y = mean, geom = "point")+
-    stat_summary(fun.y = mean, geom = "line",aes(group = 1))+
-   
-   scale_shape_manual(values = c("Above Fit Curve Range" = 1, "Below Detection Range" = 1, "In Detection Range" = 16))+
-  
-   scale_y_log10()+
-   
-   labs( y = "Concentration pg/ml")+
-   
-  facet_wrap(~Virus, scales = "free_x")+
-   
-   theme(axis.text.x = element_text(size = 11))+
-     ggtitle(Analyte)
-}
+# #write a function to make a plot for each analyte
+# 
+# plotAnalytes <- function (Analyte){
+#    avgConc_HVE_all_panels_noStds_1to2_noBelow_fullSet %>%
+#      filter(Assay == Analyte)%>%
+#      
+#      ggplot( aes(x = Timepoint, y = avgEstConc))+
+#    geom_point(aes(color = Donor ), alpha = 0.5, size = 3)+
+#   geom_line(aes(group = Donor, color = Donor), alpha = 0.5)+
+#     stat_summary(fun.y = mean, geom = "point")+
+#     stat_summary(fun.y = mean, geom = "line",aes(group = 1))+
+#    scale_shape_manual(values = c("Above Fit Curve Range" = 1, "Below Detection Range" = 1, "In Detection Range" = 16))+
+#    scale_y_log10()+
+#    labs( y = "Concentration pg/ml")+
+#   facet_wrap(~Virus, scales = "free_x")+
+#    theme(axis.text.x = element_text(size = 11))+
+#      ggtitle(Analyte)
+# }
+# 
+# 
+# 
+# lapply(analyteList, FUN = plotAnalytes)
 
 
 
-lapply(analyteList, FUN = plotAnalytes)
+
+
 
 
 ```

@@ -29,6 +29,7 @@ library(ggplot2)
 library(pander)
 library(reshape2)
 library(stringr)
+library(swarm)
 
 
 
@@ -140,7 +141,8 @@ standardsOutOfRange<-explant_stds_all_panels %>%
 
 
 
-#looking at which samples have STDs below the fit curve or below the detection range (i.e. you can't get numbers for % recovery) 
+#looking at which samples have STDs below the fit curve or below the detection range (i.e. you can't get numbers for % recovery)
+
 explant_stds_all_panels_below<- explant_stds_all_panels%>%
   filter(Detection.Range == "Below Fit Curve Range" | Detection.Range == "Below Detection Range") %>%
   group_by(Sample)%>%
@@ -173,9 +175,6 @@ ggplot(explant_stds_all_panels_percent_recov,aes( x = Sample, y = X..Recovery)) 
 
 
 
-
-
-
 #checking the R squared goodness-of-fit for the standard curves
 rSquared<-explant_stds_all_panels_percent_recov%>%
   group_by(Assay)%>%
@@ -205,11 +204,16 @@ explant_all_panels_noStds <- explant_all_panels %>%
 # I want to be able to group the data by timepoint and donor and virus so I need to break up components of the the sample name and make new columns with just the Donor, Timepoint and Virus
 
 #Split samples names on the "-"
-donorTimeVirus<-colsplit(explant_all_panels_noStds$Sample,"-", c("Donor","Timepoint","Virus") )
+donorTimeVirus<-colsplit(explant_all_panels_noStds$Sample,"-", c("Donor","Timepoint","Virus"))
 
-#bind the split col back to allPanels
+#Add a column for Sample dilution (all samples were diluted 1:2)
 
-explant_all_panels_noStds<-cbind(donorTimeVirus, explant_all_panels_noStds)
+donorTimeVirusDil <- donorTimeVirus %>%
+  mutate(Sample_Dilution = "1:2")
+
+#bind the donorTimeVirusDil to allPanels
+
+explant_all_panels_noStds<-cbind(donorTimeVirusDil, explant_all_panels_noStds)
 
 #Make things factors so they plot nicely
 explant_all_panels_noStds$Donor <- as.factor(explant_all_panels_noStds$Donor)
@@ -247,7 +251,7 @@ not2<-filter(replicateSummary,reps!="2")%>%
 
 
 #What number of samples are in each category of detection?
-explant_all_panels_noStds_Below <- explant_all_panels_noStds%>%
+explant_all_panels_noStds_NumInEach <- explant_all_panels_noStds%>%
   mutate(Panel = ifelse(str_detect(Plate.Name, "panel_1"),"Panel 1",ifelse(str_detect(Plate.Name,"panel_2"),"Panel 2","Panel 3")))%>%
  group_by(Panel,Assay, Detection.Range)%>%
   summarise(Number_of_Samples = n())
@@ -257,7 +261,7 @@ explant_all_panels_noStds_Below <- explant_all_panels_noStds%>%
 
 #Let's plot that
 
-ggplot(explant_all_panels_noStds_Below, aes(x = Assay, y=Number_of_Samples))+
+ggplot(explant_all_panels_noStds_NumInEach, aes(x = Assay, y=Number_of_Samples))+
          geom_point(aes(color = Detection.Range),size = 2)+
   theme(axis.text.x = element_text(angle=25, size = 7))+
   labs(y = "Number of Samples", x = "Analyte")+
@@ -267,21 +271,58 @@ ggplot(explant_all_panels_noStds_Below, aes(x = Assay, y=Number_of_Samples))+
 ```
 
 
+```{r multiplying by dilution factor, echo=FALSE, message = FALSE, warning = FALSE}
+
+#I'm going to make a column for estimated stock concentration by multiplying the avgConc by 2 (since I did a 1:2 dilution on the samples) so I can better compare with the HVE sup concentrations.
+
+explant_all_panels_noStds <- explant_all_panels_noStds%>%
+  mutate(Estimated_Stock_Conc =  Calc..Concentration * 2)
+
+```
 
 
-```{r avg reps, echo=FALSE, message = FALSE, warning = FALSE}
 
-#some of the samples had one rep that was below detection, so I am excluding those so I will be able to use the remaining rep as the "average" for that sample.
+```{r exclude belows, echo=FALSE, message = FALSE, warning = FALSE}
 
 #I am also excluding samples that are "Below Detection Range" because this means that the signal was "statistically indistinguishable from the background or top of the curve"" and ..."The concentrations calculated are inherently unreliable."
 
 explant_all_panels_noStds_noBelow <- explant_all_panels_noStds %>%
   filter(Detection.Range != "Below Fit Curve Range" & Detection.Range != "Below Detection Range")
+```
+
+
+## All Samples Estimated Stock Concentrations
+
+* I multiplied by the dilution factor so this is an estimated concentration of the stock samples.
+
+* Note that this is on a log(10) scale; most concentrations are a lot lower than the high ones.
+
+
+```{r  all sample concentrations, echo=FALSE, message = FALSE, warning = FALSE}
+
+
+#Plot of all samples and their concentrations
+
+ggplot(explant_all_panels_noStds_noBelow,aes( x = Timepoint, y = Estimated_Stock_Conc))+
+         geom_point(aes(color = Assay),position = position_swarm (0.5),size = 2)+
+  scale_y_log10()+
+  labs(y = "Estimated Stock Concentration pg/ml")+
+  facet_wrap(~Virus)
+
+```
+
+
+
+```{r averaging reps, echo=FALSE, message = FALSE, warning = FALSE}
 
 #averaging the replicates
+
+
+#some of the samples had one rep that was below detection, so I am excluding those so I will be able to use the remaining rep as the "average" for that sample.
+
 avgConc_explant_all_panels_noStds_noBelow <- explant_all_panels_noStds_noBelow %>%
 group_by(Sample, Assay, Donor, Timepoint,Virus)%>%
-summarize(avgConc = mean(Calc..Concentration))%>%
+summarize(avgEstConc = mean(Estimated_Stock_Conc))%>%
   ungroup()
 
 
@@ -321,56 +362,68 @@ Samples omitted from the plots include:
 
 
 Also note:
-Some of the samples had one rep that was below detection and another that was in range. For these samples I used the remaining "in range" rep as the "average" for that sample.
+If a sample had one rep that was below detection and another that was in range, I used the remaining "in range" rep as the "average" for that sample.
+
+
+
+```{r  individual analyte plots, echo=FALSE, message = FALSE, warning = FALSE}
+
+ggplot(avgConc_explant_all_panels_noStds_noBelow_fullSet, aes(x = Timepoint, y = avgEstConc))+
+   geom_point(aes(color = Donor),position = position_swarm(0.07), alpha = 0.75, size = 1.5)+
+  scale_y_log10()+
+   labs( y = "Estimated Stock Concentration pg/ml")+
+   facet_grid(Assay~Virus, scales = "free_x")+
+   theme(axis.text.x = element_text(size = 11))
 
 
 
 
-```{r  samples plots, echo=FALSE, message = FALSE, warning = FALSE}
-
-#make a list of the analytes
-
-#I'm using a unique vector here instead of the levels of Assay because I don't want to include IFNa2a OR Il-7. There weren't any data points in the detection range for those analytes (so I don't want to try to make a plot of it)
-
-
-analyteList<-as.list(unique(avgConc_explant_all_panels_noStds_noBelow$Assay))
-
-
-#I'm going to make a column for estimated stock concentration by multiplying the avgConc by 5 (since I did a 1:5 dilution on the samples) so I can better compare with the HVE sup concentrations.
-
-avgConc_explant_all_panels_noStds_noBelow_fullSet <- avgConc_explant_all_panels_noStds_noBelow_fullSet %>%
-  mutate (Estimated_Stock_Conc = avgConc * 5)
 
 
 
-#write a function to make a plot for each analyte
-
-plotAnalytes <- function (Analyte){
-   avgConc_explant_all_panels_noStds_noBelow_fullSet %>%
-     filter(Assay == Analyte)%>%
-     
-     ggplot( aes(x = Timepoint, y = Estimated_Stock_Conc))+
-   
-   geom_point(aes(color = Donor ), alpha = 0.5, size = 3)+
-  geom_line(aes(group = Donor, color = Donor), alpha = 0.5)+
-    stat_summary(fun.y = mean, geom = "point")+
-    stat_summary(fun.y = mean, geom = "line",aes(group = 1))+
-   
-   scale_shape_manual(values = c("Above Fit Curve Range" = 1, "Below Detection Range" = 1, "In Detection Range" = 16))+
-  
-   scale_y_log10()+
-   
-   labs( y = "Concentration pg/ml")+
-   
-  facet_wrap(~Virus, scales = "free_x")+
-   
-   theme(axis.text.x = element_text(size = 11))+
-     ggtitle(Analyte)
-}
 
 
+################## another way of making the plots #####
 
-lapply(analyteList, FUN = plotAnalytes)
+
+# #make a list of the analytes
+# 
+# #I'm using a unique vector here instead of the levels of Assay because I don't want to include IFNa2a OR Il-7. There weren't any data points in the detection range for those analytes (so I don't want to try to make a plot of it)
+# 
+# 
+# analyteList<-as.list(unique(avgConc_explant_all_panels_noStds_noBelow$Assay))
+# 
+# 
+# 
+# 
+# #write a function to make a plot for each analyte
+# 
+# plotAnalytes <- function (Analyte){
+#    avgConc_explant_all_panels_noStds_noBelow_fullSet %>%
+#      filter(Assay == Analyte)%>%
+#      
+#      ggplot( aes(x = Timepoint, y = Estimated_Stock_Conc))+
+#    
+#    geom_point(aes(color = Donor ), alpha = 0.5, size = 3)+
+#   geom_line(aes(group = Donor, color = Donor), alpha = 0.5)+
+#     stat_summary(fun.y = mean, geom = "point")+
+#     stat_summary(fun.y = mean, geom = "line",aes(group = 1))+
+#    
+#    scale_shape_manual(values = c("Above Fit Curve Range" = 1, "Below Detection Range" = 1, "In Detection Range" = 16))+
+#   
+#    scale_y_log10()+
+#    
+#    labs( y = "Concentration pg/ml")+
+#    
+#   facet_wrap(~Virus, scales = "free_x")+
+#    
+#    theme(axis.text.x = element_text(size = 11))+
+#      ggtitle(Analyte)
+# }
+# 
+# 
+# 
+# lapply(analyteList, FUN = plotAnalytes)
 
 
 ```

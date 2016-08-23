@@ -71,6 +71,17 @@ Explant Supernatents: Detection Range
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/checking%20detection%20range-1.png)
 
+All Samples Estimated Stock Concentrations
+------------------------------------------
+
+-   I multiplied by the dilution factor so this is an estimated concentration of the stock samples.
+
+-   Note that this is on a log(10) scale; most concentrations are a lot lower than the high ones.
+
+![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/all%20sample%20concentrations-1.png)
+
+    ## facet_wrap(Virus)
+
 Plots of analyte concentrations
 -------------------------------
 
@@ -87,91 +98,4 @@ Samples omitted from the plots include:
 
 Also note: Some of the samples had one rep that was below detection and another that was in range. For these samples I used the remaining "in range" rep as the "average" for that sample.
 
-    ## [[1]]
-
-![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-1.png)
-
-    ## 
-    ## [[2]]
-
-![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-2.png)
-
-    ## 
-    ## [[3]]
-
-![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-3.png)
-
-    ## 
-    ## [[4]]
-
-![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-4.png)
-
-    ## 
-    ## [[5]]
-
-![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-5.png)
-
-    ## 
-    ## [[6]]
-
-![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-6.png)
-
-    ## 
-    ## [[7]]
-
-![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-7.png)
-
-    ## 
-    ## [[8]]
-
-![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-8.png)
-
-    ## 
-    ## [[9]]
-
-![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-9.png)
-
-    ## 
-    ## [[10]]
-
-![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-10.png)
-
-    ## 
-    ## [[11]]
-
-![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-11.png)
-
-    ## 
-    ## [[12]]
-
-![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-12.png)
-
-    ## 
-    ## [[13]]
-
-![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-13.png)
-
-    ## 
-    ## [[14]]
-
-![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-14.png)
-
-    ## 
-    ## [[15]]
-
-![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-15.png)
-
-    ## 
-    ## [[16]]
-
-![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-16.png)
-
-    ## 
-    ## [[17]]
-
-![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-17.png)
-
-    ## 
-    ## [[18]]
-
-![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/samples%20plots-18.png)
+![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/individual%20analyte%20plots-1.png)
