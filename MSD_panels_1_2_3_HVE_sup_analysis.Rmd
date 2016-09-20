@@ -1,8 +1,6 @@
 ---
-title: "MSD panels 1, 2 and 3 HVE Sup"
-author: "Claire Levy"
-date: "August 22, 2016"
-output: github_document
+title: "MSD panels 1, 2 and 3 HVE Supernatant"
+output: pdf_document
 ---
 
 
@@ -69,7 +67,7 @@ Here are plots of the % recovery (extrapolated concentration/ known concentratio
 
 The R^2^ values for goodness-of-fit for the standard curves were all >0.99
 
-```{r standards, echo=FALSE, message = FALSE, warning = FALSE}
+```{r standards,fig.height = 7, fig.width = 12, echo=FALSE, message = FALSE, warning = FALSE}
 
 
 HVE_stds_all_panels<-filter(HVE_all_panels, Sample.Group == "Standards")
@@ -113,7 +111,8 @@ ggplot(HVE_stds_all_panels_percent_recov,aes( x = Sample, y = X..Recovery)) +
   scale_y_continuous(limits = c(0, 265))+
   geom_abline(slope = 0, intercept = c(80, 120))+
   labs(y = "Percent Recovery")+
-  theme(axis.text.x = element_text(size = rel(0.8)))
+  theme(axis.text.x = element_text(size = 9))+
+  ggtitle("Percent Recovery of Standards")
 
 #checking the R squared goodness-of-fit for the standard curves
 rSquared<-HVE_stds_all_panels_percent_recov%>%
@@ -170,7 +169,7 @@ HVE_all_panels_noStds$Sample_Dilution<-as.factor(HVE_all_panels_noStds$Sample_Di
 
 The following plots show that the 1:2 dilution of the samples resulted in more samples being in "In Detection Range." 
 
-```{r checking detection range,fig.height = 6, fig.width = 10, echo=FALSE, message = FALSE, warning = FALSE}
+```{r checking detection range, fig.height=8, fig.width =12, echo=FALSE, message = FALSE, warning = FALSE}
 
 #What number of samples are in each category of detection? Also adding a column to differentiate which analyte is in which panel, mostly for facetting reasons.
 
@@ -185,7 +184,7 @@ HVE_all_panels_noStds_NumInEach <- HVE_all_panels_noStds%>%
 
 ggplot(HVE_all_panels_noStds_NumInEach, aes(x = Assay, y=Number_of_Samples))+
          geom_point(aes(color = Detection.Range),size = 2)+
-  theme(axis.text.x = element_text(angle=25, size = 8))+
+  theme(axis.text.x = element_text(angle=25, size = 11))+
   labs(y = "Number of Samples", x = "Analyte")+
   facet_wrap(Sample_Dilution~Panel, scales = "free")+
   ggtitle("Number of Samples in each Detection Range per Analyte")
@@ -216,13 +215,13 @@ HVE_all_panels_noStds_noBelow <- HVE_all_panels_noStds %>%
   filter(Detection.Range != "Below Fit Curve Range" & Detection.Range != "Below Detection Range")
 ```
 
-## All Samples Estimated Stock Concentrations
+## Estimated Sample Concentration Distribution
 
 * I multiplied by the dilution factors so this is an estimated concentration of the stock samples.
 
 * Note that this is on a log(10) scale; most concentrations are a lot lower than the high ones.
 
-```{r  all sample concentrations, echo=FALSE, message = FALSE, warning = FALSE}
+```{r  all sample concentrations,fig.height = 6, fig.with = 10,  echo=FALSE, message = FALSE, warning = FALSE}
 
 #Plot of all samples and their concentrations
 
@@ -230,7 +229,8 @@ ggplot(HVE_all_panels_noStds_noBelow,aes( x = Timepoint, y = Estimated_Stock_Con
          geom_point(aes(color = Assay),position = position_swarm (0.5),size = 2)+
   scale_y_log10()+
   labs(y = "Estimated Stock Concentration pg/ml")+
-  facet_wrap(~Virus)
+  facet_wrap(~Virus)+
+  ggtitle("Estimated Sample Concentration Distribution by Treatment and Timepoint")
 
 
 ```
@@ -279,7 +279,8 @@ avgConc_HVE_all_panels_noStds_1to2_noBelow_fullSet <- avgConc_HVE_all_panels_noS
 ```
 
 
-## Plots of analyte concentrations
+## Plots of Analyte Concentrations by Donor, Timepoint and Condition
+
 Since the 1:2 diluted samples were more likely to be in the detection range, I am only showing data for those.
 
 ## Caveats
@@ -294,7 +295,7 @@ Also note:
 If a sample had one rep that was below detection and another that was in range, I used the remaining "in range" rep as the "average" for that sample.
 
 
-```{r  individual analyte plots,fig.width = 8, fig.height= 13 , echo=FALSE, message = FALSE, warning = FALSE}
+```{r  individual analyte plots, echo=FALSE,fig.width=8, fig.height = 10, message = FALSE, warning = FALSE}
 
 
 ggplot(avgConc_HVE_all_panels_noStds_1to2_noBelow_fullSet, aes(x = Timepoint, y = avgEstConc))+
@@ -302,7 +303,8 @@ ggplot(avgConc_HVE_all_panels_noStds_1to2_noBelow_fullSet, aes(x = Timepoint, y 
   scale_y_log10()+
    labs( y = "Estimated Stock Concentration pg/ml")+
    facet_grid(Assay~Virus, scales = "free_x")+
-   theme(axis.text.x = element_text(size = 11))
+   theme(axis.text.x = element_text(size = 11))+
+  ggtitle("Analyte Concentrations by Donor, Timepoint and Condition")
 
 
 
