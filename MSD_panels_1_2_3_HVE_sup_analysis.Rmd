@@ -207,12 +207,14 @@ HVE_all_panels_noStds <- HVE_all_panels_noStds%>%
 
 
 
-```{r exclude belows, echo=FALSE, message = FALSE, warning = FALSE}
+```{r adjust belows, echo=FALSE, message = FALSE, warning = FALSE}
+#Samples that are "Below Detection Range" means that the signal was "statistically indistinguishable from the background or top of the curve"" and ..."The concentrations calculated are inherently unreliable."
 
-#I am excluding samples that are "Below Detection Range" because this means that the signal was "statistically indistinguishable from the background or top of the curve"" and ..."The concentrations calculated are inherently unreliable." If one of two reps fell into either of these categories, the remaining replicate will serve as the "average" for that sample.
+#HOWEVER, we still want to show the fact that those samples had really low concentrations. So, I am going to set all those samples to 0.001 so they show up on plots.
 
-HVE_all_panels_noStds_noBelow <- HVE_all_panels_noStds %>%
-  filter(Detection.Range != "Below Fit Curve Range" & Detection.Range != "Below Detection Range")
+
+HVE_all_panels_noStds_AdjBelow <- HVE_all_panels_noStds %>%
+  mutate(Estimated_Stock_Conc = ifelse(str_detect(Detection.Range,"Below"),0.01, Estimated_Stock_Conc))
 ```
 
 ## Estimated Sample Concentration Distribution
@@ -221,11 +223,35 @@ HVE_all_panels_noStds_noBelow <- HVE_all_panels_noStds %>%
 
 * Note that this is on a log(10) scale; most concentrations are a lot lower than the high ones.
 
+```{r filter for 1:2, echo=FALSE, message = FALSE, warning = FALSE}
+### NOTE ### I'm going to filter for just the 1:2 dilution samples here since they gave more in-detection.
+
+HVE_all_panels_noStds_AdjBelow_short<-HVE_all_panels_noStds_AdjBelow %>%
+  filter(Sample_Dilution =="1:2", Detection.Range != "Above Fit Curve Range")
+
+
+
+#There were a few samples where the 1:2 dilution was above the fit curve range but it was in range for 1:5. I am going to extract those samples and add them to the df I made above, along with their corresponding Mock samples (which are also in range
+
+IL1RA_4_T3<-HVE_all_panels_noStds_AdjBelow%>%
+  filter(Assay == "IL1-RA", Donor == 4, Timepoint == "T3", Sample_Dilution=="1:5")
+
+
+IL1RA_2_T2<-HVE_all_panels_noStds_AdjBelow%>%
+  filter(Assay == "IL1-RA", Donor == 2, Timepoint == "T2", Sample_Dilution=="1:5")
+
+HVE_all_panels_noStds_AdjBelow_short <- rbind(HVE_all_panels_noStds_AdjBelow_short,IL1RA_4_T3,IL1RA_2_T2)
+
+
+```
+
+
+
 ```{r  all sample concentrations,fig.height = 6, fig.with = 10,  echo=FALSE, message = FALSE, warning = FALSE}
 
 #Plot of all samples and their concentrations
 
-ggplot(HVE_all_panels_noStds_noBelow,aes( x = Timepoint, y = Estimated_Stock_Conc))+
+ggplot(HVE_all_panels_noStds_AdjBelow_short,aes( x = Timepoint, y = Estimated_Stock_Conc))+
          geom_point(aes(color = Assay),position = position_swarm (0.5),size = 2)+
   scale_y_log10()+
   labs(y = "Estimated Stock Concentration pg/ml")+
@@ -237,61 +263,130 @@ ggplot(HVE_all_panels_noStds_noBelow,aes( x = Timepoint, y = Estimated_Stock_Con
 
 
 
-
-```{r filter for 1:2, echo=FALSE, message = FALSE, warning = FALSE}
-### NOTE ### I'm going to filter for just the 1:2 dilution samples here since they gave more in-detection.
-
-HVE_all_panels_noStds_1to2_noBelow<-HVE_all_panels_noStds_noBelow %>%
-  filter(Sample_Dilution =="1:2")
-
-```
-
-
 ```{r avg reps, echo=FALSE, message = FALSE, warning = FALSE}
 
+#First change the "Below..." entries to just say "Below", since I don't care which "Below..." it was for my purposes.
 
-#averaging the replicates
-avgConc_HVE_all_panels_noStds_1to2_noBelow <- HVE_all_panels_noStds_1to2_noBelow %>%
-group_by(Sample, Assay, Donor, Timepoint,Virus)%>%
+HVE_all_panels_noStds_AdjBelow_short <- HVE_all_panels_noStds_AdjBelow_short %>%
+  mutate(Detection.Range = ifelse(str_detect(Detection.Range, "Below"), "Below", as.character(Detection.Range)))
+
+#which samples have discordant replicates in terms of det.range?
+repsInRange<-HVE_all_panels_noStds_AdjBelow_short%>%
+  group_by(Sample, Assay, Detection.Range)%>%
+  summarize(Number_Reps = n())
+
+
+#merge the repsInRange data with the HVE_all_panels_noStds_1to2_AdjBelow data by the Sample and Assay
+
+#Result is a df where the samples with dischordant replicates in terms of Detection.Range. The samples with "1" in the Number_of_Reps colimn are the ones where I want to use the data from the rep that was in/above range for the avg, NOT the average between the in-range rep and the below-range rep. Recall that I assigned all below range/curve reps a value of 0.01. If both reps were below, ok to use calculate the average of them.
+
+# select fewer cols for readability.
+
+mergeRepsInRange <- HVE_all_panels_noStds_AdjBelow_short %>%
+  merge(.,repsInRange, by = c("Sample", "Assay", "Detection.Range"))%>%
+  select(Sample,Timepoint,Donor,Virus,Assay,Detection.Range, Estimated_Stock_Conc, Number_Reps, Plate.Name, Sample_Dilution)
+
+#The  rows of data that I want will fit the following criteria:
+
+#Detection.Range = Below and Number_reps = 2 (both reps are below)
+#Detection.Range != Below and Number_reps = 2 (both reps are good)
+#Detection.Range != Below and Number_reps = 1 (The in/above range rep from a discordant set)
+
+
+
+#I am doing this by filtering for the things I want to keep, then combining those dfs, rather than writing one expression to say what to exclude. (mostly because I couldnt figure it out...)
+
+
+bothBad <- mergeRepsInRange %>%
+  filter(Detection.Range =="Below"& Number_Reps ==2)
+
+discordGood<- mergeRepsInRange %>%
+  filter(Detection.Range == "In Detection Range" & Number_Reps ==1)
+   
+bothGood <- mergeRepsInRange %>%
+  filter(Detection.Range == "In Detection Range"& Number_Reps == 2)
+
+
+
+#combine all the reps, including the data the I extracted from the 1:5 dilution for IL1-RA
+
+OKtoAvg <- rbind(bothBad,discordGood, bothGood)
+
+
+#averaging the replicates. Should have 944 reps - 26 single reps = 918 reps
+
+#918 reps /2 =459 averages + 26 averages from single reps = 485 values
+avgConc <- OKtoAvg %>%
+group_by(Sample, Assay, Donor, Timepoint,Virus, Sample_Dilution)%>%
 summarize(avgEstConc = mean(Estimated_Stock_Conc))%>%
   ungroup()
 
 
 #Looking at the number of samples in each sample "set"(Same Donor and Timepoint). Some are missing V1 or V2. or both!! I don't want the ones with just one sample in the set.
 
-numberInSets<-avgConc_HVE_all_panels_noStds_1to2_noBelow %>%
+numberInSets<-avgConc %>%
          group_by(Donor,Timepoint,Assay)%>%
   select(Sample,Donor, Timepoint,Assay)%>%
   summarize(numInSet = n())
 
 
-#now I'll merge the avgConc df with this numberInSets info created above so I can then filter out samples that have <2 samples in the set
-
-avgConc_HVE_all_panels_noStds_1to2_noBelow <- merge(avgConc_HVE_all_panels_noStds_1to2_noBelow, numberInSets, by = c("Donor", "Timepoint", "Assay"))
-
-
-#now exclude the samples where there not a "full set", i.e. 1 sample only in the set
-
-avgConc_HVE_all_panels_noStds_1to2_noBelow_fullSet <- avgConc_HVE_all_panels_noStds_1to2_noBelow %>%
-  filter(numInSet != 1)
+#all complete sets!
 
 
 ```
 
 
+
+
+```{r  subtract mock, fig.width = 8, fig.height= 13, echo=FALSE}
+
+#I want to subtract out the mock data from the corresponding v1 and V2 data.
+
+#extract out Mock samples
+
+mock <- avgConc %>%
+  filter(Virus == "M")
+
+# remove mock from the rest of the data
+
+no_mock_avgConc <-
+  avgConc %>%
+  filter(Virus !="M")
+
+mergeMock<-merge(no_mock_avgConc, mock, by = c("Donor","Timepoint","Assay", "Sample_Dilution"), all.x = TRUE, all.y = TRUE)
+
+#check for NA's (places where there was a mock sample but no corresponding V1 or V2)
+whichNAs<-mergeMock[which(is.na(mergeMock$Sample.x)),]
+
+#no NA's!
+
+
+
+#Fix up the colnames:
+
+names(mergeMock)[c(5:7,10)]<- c("Sample","Virus","avgEstConcVirus","avgEstConcMock")
+
+#When the experimental and mock samples were both "below", we get zero in the minusMockEstConc column, and that won't show up on a log scale. So I'm setting all zeros in the minusMockEstConc column to 0.01.
+
+#Also, in cases where the Mock values are > Virus values, we would get a negative number for the result and not be able to plot it on a log scale. So I will take the log of each, then subtract, then plot on a linear scale, so I can have the negatives there. 
+
+#Recall that log(a/b) = log(a)-log(b)
+#so if Mock = 100 and V = 10, log 100/10 = log (0.1) = -1
+# and log(100)-log(10) = 1-2 = -1
+
+mergeMock <- mergeMock %>%
+  mutate(logMock = log10(avgEstConcMock))%>%
+  mutate(logVirus = log10(avgEstConcVirus))%>%
+  mutate(MockSubtracted = logVirus - logMock)
+
+
+
+```
+
 ## Plots of Analyte Concentrations by Donor, Timepoint and Condition
 
-Since the 1:2 diluted samples were more likely to be in the detection range, I am only showing data for those.
-
 ## Caveats
-Samples omitted from the plots include:
 
-* Concentrations below the fit curve range. Values cannot be extrapolated when the data was *below* the fit curve range. However,the MSD software can extrapolate values that are *above* the fit curve range if the curve is linear at the top.
-
-* Samples for which there was only data for a Mock sample and neither of the virus conditions.
-
-
-Also note:
 If a sample had one rep that was below detection and another that was in range, I used the remaining "in range" rep as the "average" for that sample.
 
 

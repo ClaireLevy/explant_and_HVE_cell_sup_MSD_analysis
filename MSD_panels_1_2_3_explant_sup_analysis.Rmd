@@ -1,6 +1,6 @@
 ---
 title: "MSD panels 1, 2 and 3 Explant Supernatant"
-output: pdf_document
+output: html_document
 ---
 
 ## Experiment overview
@@ -336,16 +336,13 @@ ggplot(explant_all_panels_noStds_AdjBelow,aes( x = Timepoint, y = Estimated_Stoc
   facet_wrap(~Virus)+
   ggtitle("Estimated Sample Concentration Distribution by Treatment and Timepoint")
 
-cat("\n\n\\pagebreak\n")
+#("\n\n\\pagebreak\n")
 
 ```
 
 
 
 ```{r averaging reps, echo=FALSE, message = FALSE, warning = FALSE}
-
-
-
 
 
 #First change the "Below..." entries to just say "Below", since I don't care which "Below..." it was for my purposes.
@@ -439,9 +436,6 @@ avgConc_explant_all_panels_noStds_AdjBelow <- merge(avgConc_explant_all_panels_n
 ```
 
 
-
-
-
 ```{r  subtract mock, fig.width = 8, fig.height= 13, echo=FALSE}
 
 #I want to subtract out the mock data from the corresponding v1 and V2 data.
@@ -472,43 +466,75 @@ mergeMock<-mergeMock%>%
 
 names(mergeMock)[4:8]<- c("Sample","Virus","avgEstConcVirus","numInSet","avgEstConcMock")
 
-#Do the subtraction
 
-mergeMock<- mergeMock %>%
-  mutate(minusMockEstConc = avgEstConcVirus-avgEstConcMock)
 
-#When the experimental and mock samples were both "below", we get zero in the minusMockEstConc column, and that won't show up on a log scale. So I'm setting all zeros in the minusMockEstConc column to 0.01
+#When the experimental and mock samples were both "below", we get zero in the minusMockEstConc column, and that won't show up on a log scale. So I'm setting all zeros in the minusMockEstConc column to 0.01.
+
+#Also, in cases where the Mock values are > Virus values, we would get a negative number for the result and not be able to plot it on a log scale. So I will take the log of each, then subtract, then plot on a linear scale, so I can have the negatives there. 
+
+#Recall that log(a/b) = log(a)-log(b)
+#so if Mock = 100 and V = 10, log 100/10 = log (0.1) = -1
+# and log(100)-log(10) = 1-2 = -1
 
 mergeMock <- mergeMock %>%
-  mutate(minusMockEstConc = ifelse(minusMockEstConc <= 0, 0.01, minusMockEstConc))
+  mutate(logMock = log10(avgEstConcMock))%>%
+  mutate(logVirus = log10(avgEstConcVirus))%>%
+  mutate(MockSubtracted = logVirus - logMock)
 
-
-anyNA(mergeMock)
 ```
 
+
+```{r make adjustments for nice plotting,echo=FALSE}
+
+
+mergeMock<-mergeMock %>%
+  mutate(Timepoint = ifelse(Timepoint == "T1", "3",
+                            ifelse(Timepoint=="T2","8","24")))
+
+
+mergeMock<-mergeMock%>%
+  mutate(Virus = ifelse(Virus == "V1", "SD90",
+                        ifelse(Virus == "V2", "186","Mock")))
+
+
+mergeMock$Timepoint<-factor(mergeMock$Timepoint,levels = c("3","8","24"))
+
+```
+
+
 ## Plots of Analyte Concentrations by Donor, Timepoint and Condition
-We did a 1:5 dilution of the samples so I multiplied the concentrations by 5 to get an estimate of the stock suparnatent concentration. 
+We did a 1:5 dilution of the samples so I multiplied the concentrations by 5 to get an estimate of the stock supernatent concentration. 
 
-## Caveats
-Samples omitted from the plots include:
-
-* Samples for which there was only data for a Mock sample and neither of the virus conditions (Donor 324, IL-1RA, MIG, RANTES)
-
-
-Also note:
 If a sample had one rep that was below detection and another that was in range, I used the remaining "in range" rep as the "average" for that sample.
 
+```{r  individual analyte plots, fig.width = 6,fig.height= 13, echo=FALSE}
 
-
-```{r  individual analyte plots, fig.width = 8, fig.height= 13, echo=FALSE}
-
-ggplot(mergeMock, aes(x = Timepoint, y = minusMockEstConc))+
+ggplot(mergeMock, aes(x = Timepoint, y = MockSubtracted))+
    geom_point(aes(color = Donor),position = position_swarm(0.1), alpha = 0.75, size = 3)+
-   scale_y_log10()+
+   labs( y = "Estimated Stock Concentration pg/ml")+
+   facet_grid(Assay~Virus, scales = "free_x")+
+   theme(axis.text.x = element_text(size = 11))+
+  #geom_hline(yintercept = 0)+
+  ggtitle("Analyte Concentrations by Donor, Timepoint and Condition")
+
+```
+
+
+This is just donors 317,318,323 and 324, which were interesting in the microarray
+
+```{r  subset plots, fig.width = 6,fig.height= 13, echo=FALSE}
+
+#Make plots just showing data for donors 317, 318, 323,324
+
+subset<-mergeMock%>%
+  filter(Donor == "317"|Donor == "318"|Donor =="323"|Donor =="324")
+
+
+#plot it
+
+ggplot(subset, aes(x = Timepoint, y = MockSubtracted))+
+   geom_point(aes(color = Donor),position = position_swarm(0.1), alpha = 0.75, size = 3)+
    labs( y = "Estimated Stock Concentration pg/ml")+
    facet_grid(Assay~Virus, scales = "free_x")+
    theme(axis.text.x = element_text(size = 11))+
   ggtitle("Analyte Concentrations by Donor, Timepoint and Condition")
-
-
-```
