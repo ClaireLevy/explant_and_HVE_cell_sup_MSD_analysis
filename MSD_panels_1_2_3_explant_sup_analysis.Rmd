@@ -281,7 +281,7 @@ explant_all_panels_noStds_NumInEach_bySample <- explant_all_panels_noStds%>%
 ```
 
 
-```{r multiplying by dilution factor, echo=FALSE, message = FALSE, warning = FALSE}
+```{r multiplying by 5, echo=FALSE, message = FALSE, warning = FALSE}
 
 #I'm going to make a column for estimated stock concentration by multiplying the avgConc by 5 (since I did a 1:5 dilution on the samples) so I can better compare with the HVE sup concentrations.
 
