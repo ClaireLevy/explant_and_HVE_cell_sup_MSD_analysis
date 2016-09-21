@@ -1,6 +1,6 @@
 ---
 title: "MSD panels 1, 2 and 3 Explant Supernatant"
-output: github_document
+output: html_document
 ---
 
 ## Experiment overview
@@ -515,7 +515,7 @@ ggplot(mergeMock, aes(x = Timepoint, y = MockSubtracted))+
    facet_grid(Assay~Virus, scales = "free_x")+
    theme(axis.text.x = element_text(size = 11))+
   #geom_hline(yintercept = 0)+
-  ggtitle("Analyte Concentrations")
+  ggtitle("Mock Subtracted Analyte Concentrations")
 
 ```
 
@@ -537,4 +537,4 @@ ggplot(subset, aes(x = Timepoint, y = MockSubtracted))+
    labs( y = "log10 Estimated Stock Concentration pg/ml")+
    facet_grid(Assay~Virus, scales = "free_x")+
    theme(axis.text.x = element_text(size = 11))+
-  ggtitle("Analyte Concentrations")
+  ggtitle("Mock Subtracted Analyte Concentrations")
