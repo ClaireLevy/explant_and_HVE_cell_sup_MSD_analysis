@@ -1,0 +1,173 @@
+---
+title: "TEST_analysis"
+author: "Claire Levy"
+date: "June 28, 2016"
+output:
+  md_document:
+    variant: markdown_github
+
+---
+
+
+This is an analysis of test data that we got from running HVTN clinic CVL samples on "plate 1" See explant_and_HVE_cell_sup_MSD_README for more on the different plates/analyte panels. This plate has the following analytes measured in each well
+
+Plate 1: U-PLEX Biomarker Group 1 (hu) Assays
+
+	U-PLEX Human IFN-γ
+	U-PLEX Human IL-1β
+	U-PLEX Human IL-2
+	U-PLEX Human IL-6
+	U-PLEX Human IL-8
+	U-PLEX Human IL-10
+	U-PLEX Human IL-12p70
+	U-PLEX Human TNF-α
+	
+The MSD machine gives the data in an excel or text format. I have .csv file with the results. 
+
+The definition of each column is in appendix 12 of the Discovery Workbench software manual. Since there are 2 replicates for each sample, the software caluclates an average for some of the measurements (signal, concentration). In order to show both the mean values AND the values for each replicates, the mean values are given twice, once on the row with data for the first rep, then again on the row for its pair.
+
+When FC analyzed the data before she made the following plots for each analyte:
+
+plot of standard curve with upper and lower detection limits (signal on x axis and calculated conc on y)
+
+plot of signal vs dilution (1 10 and 100) for each PTID, including lines showing the upper and lower limits for that analyte.
+
+
+
+
+This is a plot of standard curves for each assay. They are made by plotting the known concentration of the standards (calibrators) vs the signal readout from the machine. These curves are used to extrapolate signal values, and generate "calculated concentrations" of the standards.
+
+
+
+
+
+
+
+```{r standards, echo=FALSE, message=FALSE, warning=FALSE}
+
+
+library(dplyr)
+library(ggplot2)
+library(pander)
+library(reshape2)
+
+#read in the .csv raw results file
+#../ to go up one level and then back down into a different folder.
+
+dat<- read.csv("../raw_data/Plate 1-TEST.csv")
+
+
+#you get a lot of columns of data
+colnames(dat)
+
+#descriptions of what is in each column are in appendix 12 of the Discovery Bench software manual.
+
+# We entered the PTId for "Sample.Group" and the "Sample" is just an arbitrary value
+
+standards <- dat %>%
+  filter(Sample.Group == "Standards")
+  
+
+
+#the input concentrations vs signal. These curves are used to extrapolate the "calculated concentrations"
+
+ggplot(standards, aes(x = Concentration, y = Signal ))+
+  geom_point(aes(color = Assay))+
+  geom_line(aes(group = Assay, color = Assay))+
+  scale_y_log10(breaks = c(10^3, 10^4, 10^5, 10^6))+
+  scale_x_log10(breaks = c(10^0, 10^1, 10^2, 10^3, 10^4, 10^5))
+```
+
+Of the `r length(standards)` standards that we measured, `r length(standardsInRange)` are in the detection range.  The following samples were NOT in the detection range:
+
+
+
+```{r detection range, echo=FALSE, message=FALSE, warning=FALSE}
+
+standardsInRange <-standards%>%
+  filter(Detection.Range == "In Detection Range")
+
+standardsOutOfRange<-standards%>%
+  filter(Detection.Range != "In Detection Range")%>%
+  arrange(Assay,Detection.Range)%>%
+  select(Sample.Group,Sample, Assay, Detection.Range)
+
+#only want to keep the standardsInRange
+
+
+pander(standardsOutOfRange)
+```
+
+
+Discovery Workbench software manual tells us we can evaluate the quality of the fit by looking at the "%Recovery" column for the standards (=Calculated Conc/known conc x 100). The standard concentrations are known, so if the curve is a good fit, the % Recovery should be between 80-120% of the known (input) concentration values.
+
+There following standards had an average percent recovery outside of the "good fit" (<80 or >120) range
+
+```{r curve fit, echo=FALSE, message=FALSE, warning=FALSE}
+
+
+#Making a table of the avg % recovery. Sample replicates are given the same entry in the "Sample" column, so they can be grouped that way, and then averaged. Note that some replicates may have been eliminated when I filtered for only samples that are in the detection range. For these "singlicates" the mean of the %recovery will be the same as the % recovery.
+
+standard_avg_percent_recov<- standardsInRange %>%
+  group_by(Assay, Sample)%>%
+  summarize(avg_percent_recov=mean(X..Recovery))
+  
+
+below80Above120<-standard_avg_percent_recov%>%
+  filter(avg_percent_recov <80 | avg_percent_recov >120)
+  
+
+pander(below80Above120)
+
+
+```
+
+
+
+The following samples were outside the detection range, I will exclude them from the rest of the analysis:
+
+
+```{r experimental, echo= FALSE, warning= FALSE, message = FALSE}
+
+#the experimental data ("expDat") is everything except the standards
+
+expDat <- filter(dat, Sample.Group !="Standards")
+
+#Some of the data are not in the detection range 
+
+expDatOutOfRange <- expDat %>%
+  filter(Detection.Range != "In Detection Range")%>%
+  select(Assay, Sample.Group, Dilution, Detection.Range)
+
+pander(expDatOutOfRange)
+
+
+#Just keep the ones in the detection range
+
+expDatInRange<-filter(expDat, Detection.Range == "In Detection Range")
+
+#calculate the average for the signal for each Assay + Sample.Group + Dilution condition.
+
+expDatInRangeAvgSignal <- expDatInRange %>%
+  group_by(Assay, Sample.Group, Dilution)%>%
+  summarize(Avg_Signal = mean(Signal))
+
+
+
+ggplot(expDatInRangeAvgSignal, aes(x = Dilution, y = Avg_Signal))+
+  geom_point(aes( ))
+
+
+
+
+
+
+
+
+
+
+
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
