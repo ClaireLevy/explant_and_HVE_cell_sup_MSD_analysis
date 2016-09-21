@@ -1,6 +1,6 @@
 ---
 title: "MSD panels 1, 2 and 3 Explant Supernatant"
-output: html_document
+output: github_document
 ---
 
 ## Experiment overview
@@ -511,11 +511,11 @@ If a sample had one rep that was below detection and another that was in range, 
 
 ggplot(mergeMock, aes(x = Timepoint, y = MockSubtracted))+
    geom_point(aes(color = Donor),position = position_swarm(0.1), alpha = 0.75, size = 3)+
-   labs( y = "Estimated Stock Concentration pg/ml")+
+   labs( y = "log 10 Estimated Stock Concentration pg/ml")+
    facet_grid(Assay~Virus, scales = "free_x")+
    theme(axis.text.x = element_text(size = 11))+
   #geom_hline(yintercept = 0)+
-  ggtitle("Analyte Concentrations by Donor, Timepoint and Condition")
+  ggtitle("Analyte Concentrations")
 
 ```
 
@@ -534,7 +534,7 @@ subset<-mergeMock%>%
 
 ggplot(subset, aes(x = Timepoint, y = MockSubtracted))+
    geom_point(aes(color = Donor),position = position_swarm(0.1), alpha = 0.75, size = 3)+
-   labs( y = "Estimated Stock Concentration pg/ml")+
+   labs( y = "log10 Estimated Stock Concentration pg/ml")+
    facet_grid(Assay~Virus, scales = "free_x")+
    theme(axis.text.x = element_text(size = 11))+
-  ggtitle("Analyte Concentrations by Donor, Timepoint and Condition")
+  ggtitle("Analyte Concentrations")

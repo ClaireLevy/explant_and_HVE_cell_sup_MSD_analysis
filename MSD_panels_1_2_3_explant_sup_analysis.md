@@ -1,7 +1,5 @@
-MSD panels 1, 2 and 3 Explant Sup
+MSD panels 1, 2 and 3 Explant Supernatant
 ================
-Claire Levy
-August 12, 2016
 
 Experiment overview
 -------------------
@@ -71,8 +69,8 @@ Explant Supernatents: Detection Range
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/checking%20detection%20range-1.png)
 
-All Samples Estimated Stock Concentrations
-------------------------------------------
+Estimated Sample Concentration Distribution
+-------------------------------------------
 
 -   I multiplied by the dilution factor so this is an estimated concentration of the stock samples.
 
@@ -80,20 +78,15 @@ All Samples Estimated Stock Concentrations
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/all%20sample%20concentrations-1.png)
 
-Plots of analyte concentrations
--------------------------------
+Plots of Analyte Concentrations by Donor, Timepoint and Condition
+-----------------------------------------------------------------
 
-We did a 1:5 dilution of the samples so I multiplied the concentrations by 5 to get an estimate of the stock suparnatent concentration. Black points show the means.
+We did a 1:5 dilution of the samples so I multiplied the concentrations by 5 to get an estimate of the stock supernatent concentration.
 
-Caveats
--------
-
-Samples omitted from the plots include:
-
--   Concentrations below the fit curve range. Values cannot be extrapolated when the data was *below* the fit curve range. However,the MSD software can extrapolate values that are *above* the fit curve range if the curve is linear at the top.
-
--   Samples for which there was only data for a Mock sample and neither of the virus conditions.
-
-Also note: If a sample had one rep that was below detection and another that was in range, I used the remaining "in range" rep as the "average" for that sample.
+If a sample had one rep that was below detection and another that was in range, I used the remaining "in range" rep as the "average" for that sample.
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/individual%20analyte%20plots-1.png)
+
+This is just donors 317,318,323 and 324, which were interesting in the microarray
+
+![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/subset%20plots-1.png)
