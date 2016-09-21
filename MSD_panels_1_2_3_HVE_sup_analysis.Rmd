@@ -1,6 +1,6 @@
 ---
 title: "MSD panels 1, 2 and 3 HVE Supernatant"
-output: pdf_document
+output: html_document
 ---
 
 
@@ -393,52 +393,12 @@ If a sample had one rep that was below detection and another that was in range, 
 ```{r  individual analyte plots, echo=FALSE,fig.width=8, fig.height = 10, message = FALSE, warning = FALSE}
 
 
-ggplot(avgConc_HVE_all_panels_noStds_1to2_noBelow_fullSet, aes(x = Timepoint, y = avgEstConc))+
+ggplot(mergeMock, aes(x = Timepoint, y = MockSubtracted))+
    geom_point(aes(color = Donor), alpha = 0.75, size = 3)+
-  scale_y_log10()+
    labs( y = "Estimated Stock Concentration pg/ml")+
    facet_grid(Assay~Virus, scales = "free_x")+
    theme(axis.text.x = element_text(size = 11))+
   ggtitle("Analyte Concentrations by Donor, Timepoint and Condition")
-
-
-
-################## another way of making the plots #########
-
-#make a list of the analytes
-
-#I'm using a unique vector here instead of the levels of Assay because I don't want to include IFNa2a OR Il-7. There weren't any data points in the detection range for those analytes (so I don't want to try to make a plot of it)
-
-
-# analyteList<-as.list(unique(avgConc_HVE_all_panels_noStds_1to2_noBelow_fullSet$Assay))
-
-
-# #write a function to make a plot for each analyte
-# 
-# plotAnalytes <- function (Analyte){
-#    avgConc_HVE_all_panels_noStds_1to2_noBelow_fullSet %>%
-#      filter(Assay == Analyte)%>%
-#      
-#      ggplot( aes(x = Timepoint, y = avgEstConc))+
-#    geom_point(aes(color = Donor ), alpha = 0.5, size = 3)+
-#   geom_line(aes(group = Donor, color = Donor), alpha = 0.5)+
-#     stat_summary(fun.y = mean, geom = "point")+
-#     stat_summary(fun.y = mean, geom = "line",aes(group = 1))+
-#    scale_shape_manual(values = c("Above Fit Curve Range" = 1, "Below Detection Range" = 1, "In Detection Range" = 16))+
-#    scale_y_log10()+
-#    labs( y = "Concentration pg/ml")+
-#   facet_wrap(~Virus, scales = "free_x")+
-#    theme(axis.text.x = element_text(size = 11))+
-#      ggtitle(Analyte)
-# }
-# 
-# 
-# 
-# lapply(analyteList, FUN = plotAnalytes)
-
-
-
-
 
 
 
