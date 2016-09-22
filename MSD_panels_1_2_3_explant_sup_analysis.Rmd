@@ -1,6 +1,6 @@
 ---
 title: "MSD panels 1, 2 and 3 Explant Supernatant"
-output: github_document
+output: html_document
 ---
 
 ## Experiment overview
@@ -310,7 +310,7 @@ explant_belows <- explant_all_panels_noStds %>%
 
 
 explant_all_panels_noStds_AdjBelow <- explant_all_panels_noStds %>%
-mutate(Estimated_Stock_Conc = ifelse(str_detect(Detection.Range,"Below"),0.01, Estimated_Stock_Conc))
+mutate(Estimated_Stock_Conc = ifelse(str_detect(Detection.Range,"Below"),0.001, Estimated_Stock_Conc))
 
 
 ```
@@ -321,6 +321,28 @@ mutate(Estimated_Stock_Conc = ifelse(str_detect(Detection.Range,"Below"),0.01, E
 * I multiplied by the dilution factor so this is an estimated concentration of the stock samples.
 
 * Note that this is on a log(10) scale; most concentrations are a lot lower than the high ones.
+
+
+```{r make adjustments for nice plotting, echo=FALSE, message = FALSE, warning = FALSE}
+
+
+explant_all_panels_noStds_AdjBelow<-explant_all_panels_noStds_AdjBelow %>%
+  mutate(Timepoint = ifelse(Timepoint == "T1", "3",
+                            ifelse(Timepoint=="T2","8","24")))
+
+
+#factor to get order right
+explant_all_panels_noStds_AdjBelow$Timepoint<-factor(explant_all_panels_noStds_AdjBelow$Timepoint,levels = c("3","8","24"))
+
+
+explant_all_panels_noStds_AdjBelow<-explant_all_panels_noStds_AdjBelow%>%
+  mutate(Virus = ifelse(Virus == "V1", "SD90",
+                        ifelse(Virus == "V2", "186","Mock")))
+
+
+explant_all_panels_noStds_AdjBelow$Virus<-factor(explant_all_panels_noStds_AdjBelow$Virus,levels = c("Mock","SD90","186"))
+
+```
 
 
 ```{r  all sample concentrations,fig.height = 6, fig.with = 10, echo=FALSE, message = FALSE, warning = FALSE, results = 'asis'}
@@ -419,8 +441,6 @@ summarize(avgEstConc = mean(Estimated_Stock_Conc))%>%
 
 #Looking at the number of samples in each sample "set"(Same Donor and Timepoint). 
 
-
-
 numberInSets<-avgConc_explant_all_panels_noStds_AdjBelow %>%
          group_by(Donor,Timepoint,Assay)%>%
   select(Sample,Donor, Timepoint,Assay)%>%
@@ -436,20 +456,20 @@ avgConc_explant_all_panels_noStds_AdjBelow <- merge(avgConc_explant_all_panels_n
 ```
 
 
-```{r  subtract mock, fig.width = 8, fig.height= 13, echo=FALSE}
+```{r  merge and subtract mock, fig.width = 8, fig.height= 13, echo=FALSE}
 
 #I want to subtract out the mock data from the corresponding v1 and V2 data.
 
 #extract out Mock samples
 
 mock <- avgConc_explant_all_panels_noStds_AdjBelow %>%
-  filter(Virus == "M")
+  filter(Virus == "Mock")
 
 # remove mock from the rest of the data
 
 no_mock_avgConc_explant_all_panels_noStds_AdjBelow <-
   avgConc_explant_all_panels_noStds_AdjBelow %>%
-  filter(Virus !="M")
+  filter(Virus !="Mock")
 
 mergeMock<-merge(no_mock_avgConc_explant_all_panels_noStds_AdjBelow, mock, by = c("Donor", "Assay", "Timepoint"), all.x = TRUE, all.y = TRUE)
 
@@ -467,39 +487,12 @@ mergeMock<-mergeMock%>%
 names(mergeMock)[4:8]<- c("Sample","Virus","avgEstConcVirus","numInSet","avgEstConcMock")
 
 
-
-#When the experimental and mock samples were both "below", we get zero in the minusMockEstConc column, and that won't show up on a log scale. So I'm setting all zeros in the minusMockEstConc column to 0.01.
-
-#Also, in cases where the Mock values are > Virus values, we would get a negative number for the result and not be able to plot it on a log scale. So I will take the log of each, then subtract, then plot on a linear scale, so I can have the negatives there. 
-
-#Recall that log(a/b) = log(a)-log(b)
-#so if Mock = 100 and V = 10, log 100/10 = log (0.1) = -1
-# and log(100)-log(10) = 1-2 = -1
-
 mergeMock <- mergeMock %>%
-  mutate(logMock = log10(avgEstConcMock))%>%
-  mutate(logVirus = log10(avgEstConcVirus))%>%
-  mutate(MockSubtracted = logVirus - logMock)
+  mutate(mockSubtracted = avgEstConcVirus - avgEstConcMock)
 
 ```
 
 
-```{r make adjustments for nice plotting,echo=FALSE}
-
-
-mergeMock<-mergeMock %>%
-  mutate(Timepoint = ifelse(Timepoint == "T1", "3",
-                            ifelse(Timepoint=="T2","8","24")))
-
-
-mergeMock<-mergeMock%>%
-  mutate(Virus = ifelse(Virus == "V1", "SD90",
-                        ifelse(Virus == "V2", "186","Mock")))
-
-
-mergeMock$Timepoint<-factor(mergeMock$Timepoint,levels = c("3","8","24"))
-
-```
 
 
 ## Plots of Analyte Concentrations by Donor, Timepoint and Condition
@@ -507,34 +500,106 @@ We did a 1:5 dilution of the samples so I multiplied the concentrations by 5 to 
 
 If a sample had one rep that was below detection and another that was in range, I used the remaining "in range" rep as the "average" for that sample.
 
-```{r  individual analyte plots, fig.width = 6,fig.height= 13, echo=FALSE}
 
-ggplot(mergeMock, aes(x = Timepoint, y = MockSubtracted))+
-   geom_point(aes(color = Donor),position = position_swarm(0.1), alpha = 0.75, size = 3)+
-   labs( y = "log 10 Estimated Stock Concentration pg/ml")+
-   facet_grid(Assay~Virus, scales = "free_x")+
-   theme(axis.text.x = element_text(size = 11))+
-  #geom_hline(yintercept = 0)+
-  ggtitle("Mock Subtracted Analyte Concentrations")
+```{r setup for individual analyte HEATMAP, echo=FALSE}
+
+#I want to make a heatmap that has the following data
+
+#NO 8hr timepoint data
+
+#tiles represent foldchange of Mock subtracted 24hr data over mock-subtracted 3hr. So if 24hr>3hr, you get a ratio <1 and if 24hr <3hr you get a ratio >1
+
+
+#Want gradient intensity to max out at FC of 10.
+
+
+#Exclude 8hr data.
+
+no8mergeMock <- mergeMock %>%
+  filter(Timepoint != "8")
+
+
+# Extract the 3hr data and select a few columns
+
+timepoint3<- no8mergeMock %>%
+  filter(Timepoint == "3")%>%
+  select(Donor, Assay, Sample, Virus, mockSubtracted)
+
+
+
+#extract 24 hr data and select a few columns
+timepoint24<- no8mergeMock %>%
+  filter(Timepoint =="24")%>%
+  select(Donor, Assay, Sample, Virus, mockSubtracted)
 
 ```
 
 
+```{r merge 24 and 3, check NAs, echo=FALSE}
+#merge 24hr and 3hr data
+
+merge24And3<- merge(timepoint24,timepoint3, by  = c("Donor","Assay","Virus"), all.x = TRUE, all.y = TRUE)
+
+
+#There are 100 rows where we have data for 24hr but NOT for 3hr.
+which24no3<-merge24And3[which(is.na(merge24And3$Sample.y)),]
+
+
+#there are NO rows where we have data for 3hr but not for 24hr
+which3no24<-merge24And3[which(is.na(merge24And3$Sample.x)),]
+
+#remove the NA's for tidyness
+
+merge24And3 <- na.omit(merge24And3)
+
+#Fix up colnames      
+names(merge24And3)[4:7]<- c("Sample.24", "mockSubtracted.24","Sample.3", "mockSubtracted.3")
+```
+
+
+```{r adjust zeros, check NAs, echo=FALSE}
+
+
+#Problems with zeros:
+#If data from both timepoints is zero we'll get NaN for the ratio
+
+#If data from time 3 = 0, we'll get Inf or -Inf
+#If data from time 24 = zero, we'll get zero
+
+#I'm going to change all zeros to 0.001 to avoid these problems #I think this is ok since a heatmap isnt really quantitative
+
+
+adjZerosMerge24And3<- merge24And3 %>%
+  mutate(mockSubtracted.24 = ifelse(mockSubtracted.24 == 0, 0.001,mockSubtracted.24))%>%
+  mutate(mockSubtracted.3 = ifelse(mockSubtracted.3 == 0, 0.001,mockSubtracted.3))
+
+```
+
+
+
+```{r get ratio, check NAs, echo=FALSE}
+
+#Do the division to get a foldchange. Since we are looking at ratios, it doesnt give any info if the number is negative, plus we can't show that on a log scale. 
+#So I'm taking the abs value of the ratio.
+#and also making a column for the log10 of the ratio for plotting.
+
+adjZerosMerge24And3 <- adjZerosMerge24And3 %>%
+  mutate(AbsVal_mockSub24_Over_mockSub3 = abs(mockSubtracted.24/mockSubtracted.3))%>%
+  mutate(log10ratio = log10(AbsVal_mockSub24_Over_mockSub3))
+
+```
+
+
+```{r logFC heatmap, check NAs, echo=FALSE}
+
+
+ggplot(adjZerosMerge24And3, aes(x = Donor, y = Assay))+
+  geom_tile(aes(fill = log10ratio), color = "white")+
+  scale_fill_gradient(low = "green", high = "red")+
+  facet_wrap(~Virus)+
+  ggtitle("log fold change of concentrations at 24hrs over 3 hrs")
+
+```
+
 This is just donors 317,318,323 and 324, which were interesting in the microarray
 
-```{r  subset plots, fig.width = 6,fig.height= 13, echo=FALSE}
-
-#Make plots just showing data for donors 317, 318, 323,324
-
-subset<-mergeMock%>%
-  filter(Donor == "317"|Donor == "318"|Donor =="323"|Donor =="324")
-
-
-#plot it
-
-ggplot(subset, aes(x = Timepoint, y = MockSubtracted))+
-   geom_point(aes(color = Donor),position = position_swarm(0.1), alpha = 0.75, size = 3)+
-   labs( y = "log10 Estimated Stock Concentration pg/ml")+
-   facet_grid(Assay~Virus, scales = "free_x")+
-   theme(axis.text.x = element_text(size = 11))+
-  ggtitle("Mock Subtracted Analyte Concentrations")
