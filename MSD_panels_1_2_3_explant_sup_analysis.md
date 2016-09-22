@@ -78,15 +78,8 @@ Estimated Sample Concentration Distribution
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/all%20sample%20concentrations-1.png)
 
-Plots of Analyte Concentrations by Donor, Timepoint and Condition
------------------------------------------------------------------
-
 We did a 1:5 dilution of the samples so I multiplied the concentrations by 5 to get an estimate of the stock supernatent concentration.
 
 If a sample had one rep that was below detection and another that was in range, I used the remaining "in range" rep as the "average" for that sample.
 
-![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/individual%20analyte%20plots-1.png)
-
-This is just donors 317,318,323 and 324, which were interesting in the microarray
-
-![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/subset%20plots-1.png)
+![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/logFC%20heatmap-1.png)

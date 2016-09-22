@@ -1,6 +1,6 @@
 ---
 title: "MSD panels 1, 2 and 3 Explant Supernatant"
-output: html_document
+output: github_document
 ---
 
 ## Experiment overview
@@ -602,5 +602,5 @@ ggplot(merge24And3, aes(x = Donor, y = Assay))+
   facet_wrap(~Virus, scales = "free_x")+
   ggtitle("log fold change of concentrations at 24hrs over 3 hrs")
 ```
-This is just donors 317,318,323 and 324, which were interesting in the microarray
+
 
