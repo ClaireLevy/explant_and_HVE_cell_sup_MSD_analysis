@@ -294,7 +294,7 @@ explant_all_panels_noStds <- explant_all_panels_noStds%>%
 
 ```{r adjust belows, echo=FALSE, message = FALSE, warning = FALSE}
 
-#Samples that are "Below Detection Range" means that the signal was "statistically indistinguishable from the background or top of the curve"" and ..."The concentrations calculated are inherently unreliable."
+#Samples that are "Below Detection Range" means that the signal was "statistically indistinguishable from the background or top of the curve" and ..."The concentrations calculated are inherently unreliable."
 
 #HOWEVER, we still want to show the fact that those samples had really low concentrations. So, I am going to set all those samples to 0.001 so they show up on plots.
 
@@ -349,7 +349,7 @@ explant_all_panels_noStds_AdjBelow$Virus<-factor(explant_all_panels_noStds_AdjBe
 
 
 #Plot of all samples and their concentrations
-#Note that this includes the samples that manually set to 0.01
+#Note that this includes the samples that manually set to 0.001
 
 ggplot(explant_all_panels_noStds_AdjBelow,aes( x = Timepoint, y = Estimated_Stock_Conc))+
          geom_point(aes(color = Assay),position = position_swarm (0.5),size = 2)+
@@ -555,7 +555,7 @@ names(merge24And3)[4:7]<- c("Sample.24", "logMockSubtracted.24","Sample.3", "log
 ```
 
 
-```{r get ratio, check NAs, echo=FALSE}
+```{r get ratio, echo=FALSE}
 
 #Do the subtraction to get a foldchange.
 
@@ -564,16 +564,43 @@ merge24And3 <- merge24And3 %>%
 ```
 
 
-```{r logFC heatmap, check NAs, echo=FALSE}
+```{r setup logFC heatmap, echo=FALSE}
+
+#I want the scale to have max intensity a 10-fold change in either direction (log10(10)=1 on my scale and log10(0.1)= -1 on my scale) so I am going to set all values >=1 as 1 and all values <=-1 as -1.
+
+#set all values >=1 as 1
+
+merge24And3 <- merge24And3 %>%
+  mutate(max10fold =
+           ifelse(
+             logMockSub24_minus_logMockSub3 >=1,
+         1,
+           ifelse(
+             logMockSub24_minus_logMockSub3 <=-1,
+         -1,logMockSub24_minus_logMockSub3)
+           )
+  )
+
+
+```       
+
+
+
+
+```{r logFC heatmap, echo=FALSE}
+
+#Note that we should NOT have data for the following samples  because we didnt have sup for them
+
+# 323-T2-Anything (i.e. no SD90 data)
+# Didnt have sup for 326 T1 OR T2 (and this shows T3/T1 so we don't have anything)
+
 
 
 ggplot(merge24And3, aes(x = Donor, y = Assay))+
-  geom_tile(aes(fill = logMockSub24_minus_logMockSub3), color = "white")+
-  scale_fill_gradient(low = "green", high = "red")+
-  facet_wrap(~Virus)+
+  geom_tile(aes(fill = max10fold), color = "gray")+
+  scale_fill_gradient2(low = "green", mid = "white", high = "red", midpoint = 0, name = "log10 Fold Change")+
+  facet_wrap(~Virus, scales = "free_x")+
   ggtitle("log fold change of concentrations at 24hrs over 3 hrs")
-
 ```
-
 This is just donors 317,318,323 and 324, which were interesting in the microarray
 
