@@ -1,6 +1,6 @@
 ---
 title: "MSD panels 1, 2 and 3 HVE Supernatant"
-output: github_document
+output: html_document
 ---
 
 
@@ -223,13 +223,11 @@ HVE_all_panels_noStds_AdjBelow <- HVE_all_panels_noStds %>%
 
 * Note that this is on a log(10) scale; most concentrations are a lot lower than the high ones.
 
-```{r filter for 1:2, echo=FALSE, message = FALSE, warning = FALSE}
-### NOTE ### I'm going to filter for just the 1:2 dilution samples here since they gave more in-detection.
+```{r filter for 1:2 MOSTLY, echo=FALSE, message = FALSE, warning = FALSE}
+### NOTE ### I'm going to filter for just the 1:2 dilution samples here since they gave more in-detection. its ca''ed short because theres only 1:2 data
 
 HVE_all_panels_noStds_AdjBelow_short<-HVE_all_panels_noStds_AdjBelow %>%
-  filter(Sample_Dilution =="1:2", Detection.Range != "Above Fit Curve Range")
-
-
+  filter(Sample_Dilution =="1:2")
 
 #There were a few samples where the 1:2 dilution was above the fit curve range but it was in range for 1:5. I am going to extract those samples and add them to the df I made above, along with their corresponding Mock samples (which are also in range
 
@@ -240,10 +238,41 @@ IL1RA_4_T3<-HVE_all_panels_noStds_AdjBelow%>%
 IL1RA_2_T2<-HVE_all_panels_noStds_AdjBelow%>%
   filter(Assay == "IL1-RA", Donor == 2, Timepoint == "T2", Sample_Dilution=="1:5")
 
-HVE_all_panels_noStds_AdjBelow_short <- rbind(HVE_all_panels_noStds_AdjBelow_short,IL1RA_4_T3,IL1RA_2_T2)
+
+HVE_all_panels_noStds_AdjBelow_short <- HVE_all_panels_noStds_AdjBelow_short %>%
+  filter(!(Assay == "IL1-RA" & Donor == 2 & 
+             Timepoint == "T2" & Sample_Dilution=="1:2")) %>% 
+  filter(!(Assay == "IL1-RA" & Donor == 4 & 
+             Timepoint == "T3" & Sample_Dilution=="1:2")) 
+
+HVE_all_panels_noStds_AdjBelow_short <- rbind(
+  HVE_all_panels_noStds_AdjBelow_short, IL1RA_4_T3, IL1RA_2_T2)
 
 
 ```
+
+
+```{r make adjustments for nice plotting, echo=FALSE, message = FALSE, warning = FALSE}
+
+
+HVE_all_panels_noStds_AdjBelow_short<-HVE_all_panels_noStds_AdjBelow_short %>%
+  mutate(Timepoint = ifelse(Timepoint == "T1", "3",
+                            ifelse(Timepoint=="T2","8","24")))
+
+
+#factor to get order right
+HVE_all_panels_noStds_AdjBelow_short$Timepoint<-factor(HVE_all_panels_noStds_AdjBelow_short$Timepoint,levels = c("3","8","24"))
+
+
+HVE_all_panels_noStds_AdjBelow_short<-HVE_all_panels_noStds_AdjBelow_short%>%
+  mutate(Virus = ifelse(Virus == "V1", "SD90",
+                        ifelse(Virus == "V2", "186","Mock")))
+
+
+HVE_all_panels_noStds_AdjBelow_short$Virus<-factor(HVE_all_panels_noStds_AdjBelow_short$Virus,levels = c("Mock","SD90","186"))
+
+```
+
 
 
 
@@ -278,7 +307,7 @@ repsInRange<-HVE_all_panels_noStds_AdjBelow_short%>%
 
 #merge the repsInRange data with the HVE_all_panels_noStds_1to2_AdjBelow data by the Sample and Assay
 
-#Result is a df where the samples with dischordant replicates in terms of Detection.Range. The samples with "1" in the Number_of_Reps colimn are the ones where I want to use the data from the rep that was in/above range for the avg, NOT the average between the in-range rep and the below-range rep. Recall that I assigned all below range/curve reps a value of 0.01. If both reps were below, ok to use calculate the average of them.
+#Result is a df where the samples with discordant replicates in terms of Detection.Range. The samples with "1" in the Number_of_Reps colimn are the ones where I want to use the data from the rep that was in/above range for the avg, NOT the average between the in-range rep and the below-range rep. Recall that I assigned all below range/curve reps a value of 0.01. If both reps were below, ok to use calculate the average of them.
 
 # select fewer cols for readability.
 
@@ -338,26 +367,25 @@ numberInSets<-avgConc %>%
 
 
 
-```{r  subtract mock, fig.width = 8, fig.height= 13, echo=FALSE}
+```{r merge and subtract mock, fig.width = 8, fig.height= 13, echo=FALSE}
 
 #I want to subtract out the mock data from the corresponding v1 and V2 data.
 
 #extract out Mock samples
 
 mock <- avgConc %>%
-  filter(Virus == "M")
+  filter(Virus == "Mock")
 
 # remove mock from the rest of the data
 
 no_mock_avgConc <-
   avgConc %>%
-  filter(Virus !="M")
+  filter(Virus !="Mock")
 
 mergeMock<-merge(no_mock_avgConc, mock, by = c("Donor","Timepoint","Assay", "Sample_Dilution"), all.x = TRUE, all.y = TRUE)
 
 #check for NA's (places where there was a mock sample but no corresponding V1 or V2)
 whichNAs<-mergeMock[which(is.na(mergeMock$Sample.x)),]
-
 #no NA's!
 
 
@@ -366,40 +394,159 @@ whichNAs<-mergeMock[which(is.na(mergeMock$Sample.x)),]
 
 names(mergeMock)[c(5:7,10)]<- c("Sample","Virus","avgEstConcVirus","avgEstConcMock")
 
-#When the experimental and mock samples were both "below", we get zero in the minusMockEstConc column, and that won't show up on a log scale. So I'm setting all zeros in the minusMockEstConc column to 0.01.
 
-#Also, in cases where the Mock values are > Virus values, we would get a negative number for the result and not be able to plot it on a log scale. So I will take the log of each, then subtract, then plot on a linear scale, so I can have the negatives there. 
-
-#Recall that log(a/b) = log(a)-log(b)
-#so if Mock = 100 and V = 10, log 100/10 = log (0.1) = -1
-# and log(100)-log(10) = 1-2 = -1
-
+#do the subtraction, with the result being the difference between the log10 of virus - log 10 Mock
 mergeMock <- mergeMock %>%
-  mutate(logMock = log10(avgEstConcMock))%>%
-  mutate(logVirus = log10(avgEstConcVirus))%>%
-  mutate(MockSubtracted = logVirus - logMock)
-
-
+  mutate(logMockSubtracted = log10(avgEstConcVirus) - log10(avgEstConcMock))
 
 ```
 
-## Plots of Analyte Concentrations by Donor, Timepoint and Condition
-
-## Caveats
+Samples are multiplied by their dilution factor to get estimated concentrations.
 
 If a sample had one rep that was below detection and another that was in range, I used the remaining "in range" rep as the "average" for that sample.
 
 
-```{r  individual analyte plots, echo=FALSE,fig.width=8, fig.height = 15, message = FALSE, warning = FALSE}
+
+```{r setup for individual analyte HEATMAP, echo=FALSE}
+
+#I want to make a heatmap that has the following data
+
+#NO 8hr timepoint data
+
+#tiles represent foldchange of Mock subtracted 24hr data over mock-subtracted 3hr. So if 24hr>3hr, you get a ratio <1 and if 24hr <3hr you get a ratio >1
 
 
-ggplot(mergeMock, aes(x = Timepoint, y = MockSubtracted))+
-   geom_jitter(aes(color = Donor), alpha = 0.75, size = 2.5, width = 0.2, height = 0.2)+
-   labs( y = "log 10 Estimated Stock Concentration pg/ml")+
-   facet_grid(Assay~Virus, scales = "free_x")+
-   theme(axis.text.x = element_text(size = 11))+
-  ggtitle("Mock Subtracted Analyte Concentrations ")
+#Want gradient intensity to max out at FC of 10.
 
 
+#Exclude 8hr data.
+
+no8mergeMock <- mergeMock %>%
+  filter(Timepoint != "8")
+
+
+# Extract the 3hr data and select a few columns
+
+timepoint3<- no8mergeMock %>%
+  filter(Timepoint == "3")%>%
+  select(Donor, Assay, Sample, Virus, logMockSubtracted)
+
+
+
+#extract 24 hr data and select a few columns
+timepoint24<- no8mergeMock %>%
+  filter(Timepoint =="24")%>%
+  select(Donor, Assay, Sample, Virus, logMockSubtracted)
 
 ```
+
+
+```{r merge 24 and 3, check NAs, echo=FALSE}
+#merge 24hr and 3hr data
+
+merge24And3<- merge(timepoint24,timepoint3, by  = c("Donor","Assay","Virus"), all.x = TRUE, all.y = TRUE)
+
+
+#There are NO rows where we have data for 24hr but NOT for 3hr.
+which24no3<-merge24And3[which(is.na(merge24And3$Sample.y)),]
+
+
+#there are NO rows where we have data for 3hr but not for 24hr
+which3no24<-merge24And3[which(is.na(merge24And3$Sample.x)),]
+
+
+
+#Fix up colnames      
+names(merge24And3)[4:7]<- c("Sample.24", "logMockSubtracted.24","Sample.3", "logMockSubtracted.3")
+```
+
+```{r get ratio, check NAs, echo=FALSE}
+
+#Do the subtraction to get a foldchange.
+
+merge24And3 <- merge24And3 %>%
+  mutate(logMockSub24_minus_logMockSub3 = logMockSubtracted.24-logMockSubtracted.3)
+```
+
+
+```{r setup logFC heatmap, check NAs, echo=FALSE}
+
+#I want the scale to have max intensity a 10-fold change in either direction (log10(10)=1 on my scale and log10(0.1)= -1 on my scale) so I am going to set all values >=1 as 1 and all values <=-1 as -1.
+
+#set all values >=1 as 1
+
+merge24And3 <- merge24And3 %>%
+  mutate(max10fold =
+           ifelse(
+             logMockSub24_minus_logMockSub3 >=1,
+         1,
+           ifelse(
+             logMockSub24_minus_logMockSub3 <=-1,
+         -1,logMockSub24_minus_logMockSub3)
+           )
+  )
+
+
+```       
+
+```{r logFC heatmap, check NAs, echo=FALSE}
+
+
+
+ggplot(merge24And3, aes(x = Donor, y = Assay))+
+  geom_tile(aes(fill = max10fold), color = "gray")+
+  scale_fill_gradient2(low = "green", mid = "white", high = "red", midpoint = 0)+
+  facet_wrap(~Virus)+
+  ggtitle("log fold change of concentrations at 24hrs over 3 hrs")
+```
+
+
+
+```{r trying pheatmap, check NAs, echo=FALSE}
+
+#trying with pheatmap
+# library(pheatmap)
+# library(tidyr)
+# 
+# #trying with pheatmap since ggplot is funky looking and I want zero in the middle
+# 
+# #pheatmap need it as numeric matrix and can't facet so I'll do v186 separately from sd90
+# 
+# SD90heatmap<-merge24And3 %>%
+#   filter(Virus == "SD90")%>%
+#   select(Donor, Assay, max10fold)
+# 
+# 
+# matrixSD90heatmapSpread<-SD90heatmap%>%
+#   spread(key = Donor, value = max10fold)%>%
+#   select(-Assay)%>%
+#   as.matrix()
+# 
+# 
+# rownames(matrixSD90heatmapSpread) <-SD90heatmapSpread$Assay
+# 
+# 
+# pheatmap(matrixSD90heatmapSpread)
+# 
+
+
+
+
+
+
+
+
+
+test = matrix(rnorm(200), 20, 10)
+test[1:10, seq(1, 10, 2)] = test[1:10, seq(1, 10, 2)] + 3
+test[11:20, seq(2, 10, 2)] = test[11:20, seq(2, 10, 2)] + 2
+test[15:20, seq(2, 10, 2)] = test[15:20, seq(2, 10, 2)] + 4
+colnames(test) = paste("Test", 1:10, sep = "")
+rownames(test) = paste("Gene", 1:20, sep = "")
+
+pheatmap(test)
+
+```
+
+
+
