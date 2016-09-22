@@ -69,12 +69,8 @@ Estimated Sample Concentration Distribution
 
 ![](MSD_panels_1_2_3_HVE_sup_analysis_files/figure-markdown_github/all%20sample%20concentrations-1.png)
 
-Plots of Analyte Concentrations by Donor, Timepoint and Condition
------------------------------------------------------------------
-
-Caveats
--------
+Samples are multiplied by their dilution factor to get estimated concentrations.
 
 If a sample had one rep that was below detection and another that was in range, I used the remaining "in range" rep as the "average" for that sample.
 
-![](MSD_panels_1_2_3_HVE_sup_analysis_files/figure-markdown_github/individual%20analyte%20plots-1.png)
+![](MSD_panels_1_2_3_HVE_sup_analysis_files/figure-markdown_github/logFC%20heatmap,%20check%20NAs-1.png)

@@ -1,6 +1,6 @@
 ---
 title: "MSD panels 1, 2 and 3 HVE Supernatant"
-output: html_document
+output: github_document
 ---
 
 
