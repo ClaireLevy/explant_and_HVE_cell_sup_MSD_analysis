@@ -486,16 +486,13 @@ mergeMock<-mergeMock%>%
 
 names(mergeMock)[4:8]<- c("Sample","Virus","avgEstConcVirus","numInSet","avgEstConcMock")
 
-
+#do the subtraction, with the result being the difference between the log10 of virus - log 10 Mock
 mergeMock <- mergeMock %>%
-  mutate(mockSubtracted = avgEstConcVirus - avgEstConcMock)
+  mutate(logMockSubtracted = log10(avgEstConcVirus) - log10(avgEstConcMock))
 
 ```
 
 
-
-
-## Plots of Analyte Concentrations by Donor, Timepoint and Condition
 We did a 1:5 dilution of the samples so I multiplied the concentrations by 5 to get an estimate of the stock supernatent concentration. 
 
 If a sample had one rep that was below detection and another that was in range, I used the remaining "in range" rep as the "average" for that sample.
@@ -507,7 +504,9 @@ If a sample had one rep that was below detection and another that was in range, 
 
 #NO 8hr timepoint data
 
-#tiles represent foldchange of Mock subtracted 24hr data over mock-subtracted 3hr. So if 24hr>3hr, you get a ratio <1 and if 24hr <3hr you get a ratio >1
+#tiles represent foldchange of Mock subtracted 24hr data over mock-subtracted 3hr. So if 24hr>3hr, you get a ratio <1 and if 24hr <3hr you get a ratio >1.
+
+#recall that log(a)-log(b) = log(a/b) so I'm going to do subtration, not division to get the log ratio FC.
 
 
 #Want gradient intensity to max out at FC of 10.
@@ -523,14 +522,13 @@ no8mergeMock <- mergeMock %>%
 
 timepoint3<- no8mergeMock %>%
   filter(Timepoint == "3")%>%
-  select(Donor, Assay, Sample, Virus, mockSubtracted)
-
+  select(Donor, Assay, Sample, Virus, logMockSubtracted)
 
 
 #extract 24 hr data and select a few columns
 timepoint24<- no8mergeMock %>%
   filter(Timepoint =="24")%>%
-  select(Donor, Assay, Sample, Virus, mockSubtracted)
+  select(Donor, Assay, Sample, Virus, logMockSubtracted)
 
 ```
 
@@ -553,48 +551,24 @@ which3no24<-merge24And3[which(is.na(merge24And3$Sample.x)),]
 merge24And3 <- na.omit(merge24And3)
 
 #Fix up colnames      
-names(merge24And3)[4:7]<- c("Sample.24", "mockSubtracted.24","Sample.3", "mockSubtracted.3")
+names(merge24And3)[4:7]<- c("Sample.24", "logMockSubtracted.24","Sample.3", "logMockSubtracted.3")
 ```
-
-
-```{r adjust zeros, check NAs, echo=FALSE}
-
-
-#Problems with zeros:
-#If data from both timepoints is zero we'll get NaN for the ratio
-
-#If data from time 3 = 0, we'll get Inf or -Inf
-#If data from time 24 = zero, we'll get zero
-
-#I'm going to change all zeros to 0.001 to avoid these problems #I think this is ok since a heatmap isnt really quantitative
-
-
-adjZerosMerge24And3<- merge24And3 %>%
-  mutate(mockSubtracted.24 = ifelse(mockSubtracted.24 == 0, 0.001,mockSubtracted.24))%>%
-  mutate(mockSubtracted.3 = ifelse(mockSubtracted.3 == 0, 0.001,mockSubtracted.3))
-
-```
-
 
 
 ```{r get ratio, check NAs, echo=FALSE}
 
-#Do the division to get a foldchange. Since we are looking at ratios, it doesnt give any info if the number is negative, plus we can't show that on a log scale. 
-#So I'm taking the abs value of the ratio.
-#and also making a column for the log10 of the ratio for plotting.
+#Do the subtraction to get a foldchange.
 
-adjZerosMerge24And3 <- adjZerosMerge24And3 %>%
-  mutate(AbsVal_mockSub24_Over_mockSub3 = abs(mockSubtracted.24/mockSubtracted.3))%>%
-  mutate(log10ratio = log10(AbsVal_mockSub24_Over_mockSub3))
-
+merge24And3 <- merge24And3 %>%
+  mutate(logMockSub24_minus_logMockSub3 = logMockSubtracted.24-logMockSubtracted.3)
 ```
 
 
 ```{r logFC heatmap, check NAs, echo=FALSE}
 
 
-ggplot(adjZerosMerge24And3, aes(x = Donor, y = Assay))+
-  geom_tile(aes(fill = log10ratio), color = "white")+
+ggplot(merge24And3, aes(x = Donor, y = Assay))+
+  geom_tile(aes(fill = logMockSub24_minus_logMockSub3), color = "white")+
   scale_fill_gradient(low = "green", high = "red")+
   facet_wrap(~Virus)+
   ggtitle("log fold change of concentrations at 24hrs over 3 hrs")
