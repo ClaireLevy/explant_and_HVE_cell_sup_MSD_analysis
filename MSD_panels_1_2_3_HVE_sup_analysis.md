@@ -74,3 +74,7 @@ Samples are multiplied by their dilution factor to get estimated concentrations.
 If a sample had one rep that was below detection and another that was in range, I used the remaining "in range" rep as the "average" for that sample.
 
 ![](MSD_panels_1_2_3_HVE_sup_analysis_files/figure-markdown_github/logFC%20heatmap,%20check%20NAs-1.png)
+
+Here is the same heat map with some changes to to Assay names and order:
+
+![](MSD_panels_1_2_3_HVE_sup_analysis_files/figure-markdown_github/rename%20analytes%20logFC%20heatmap-1.png)
