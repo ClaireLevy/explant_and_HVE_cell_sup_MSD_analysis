@@ -405,6 +405,17 @@ Samples are multiplied by their dilution factor to get estimated concentrations.
 
 If a sample had one rep that was below detection and another that was in range, I used the remaining "in range" rep as the "average" for that sample.
 
+```{r scatter plots of mock subtracted, echo=FALSE,fig.width=8, fig.height = 15, message = FALSE, warning = FALSE}
+
+
+ggplot(mergeMock, aes(x = Timepoint, y = logMockSubtracted))+
+   geom_jitter(aes(color = Donor), alpha = 0.75, size = 2.5, width = 0.2, height = 0.2)+
+  labs( y = "log 10 Estimated Stock Concentration pg/ml")+
+   facet_grid(Assay~Virus, scales = "free_x")+
+   theme(axis.text.x = element_text(size = 11))+
+  ggtitle("Analyte Concentrations ")
+```
+
 
 
 ```{r setup for individual analyte HEATMAP, echo=FALSE}
