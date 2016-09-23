@@ -498,6 +498,41 @@ We did a 1:5 dilution of the samples so I multiplied the concentrations by 5 to 
 If a sample had one rep that was below detection and another that was in range, I used the remaining "in range" rep as the "average" for that sample.
 
 
+```{r scatter plots of mocksubtracted, fig.width = 6,fig.height= 13, echo=FALSE}
+
+ggplot(mergeMock, aes(x = Timepoint, y = logMockSubtracted))+
+   geom_point(aes(color = Donor),position = position_swarm(0.1), alpha = 0.75, size = 3)+
+   labs( y = "log 10 Estimated Stock Concentration pg/ml")+
+   facet_grid(Assay~Virus, scales = "free_x")+
+   theme(axis.text.x = element_text(size = 11))+
+  #geom_hline(yintercept = 0)+
+  ggtitle("Mock Subtracted Analyte Concentrations")
+
+```
+
+
+This is just donors 317,318,323 and 324, which were interesting in the microarray
+
+```{r subset scatter plots, fig.width = 6,fig.height= 13, echo=FALSE}
+
+#Make plots just showing data for donors 317, 318, 323,324
+
+subset<-mergeMock%>%
+  filter(Donor == "317"|Donor == "318"|Donor =="323"|Donor =="324")
+
+
+#plot it
+
+ggplot(subset, aes(x = Timepoint, y = logMockSubtracted))+
+   geom_point(aes(color = Donor),position = position_swarm(0.1), alpha = 0.75, size = 3)+
+   labs( y = "log10 Estimated Stock Concentration pg/ml")+
+   facet_grid(Assay~Virus, scales = "free_x")+
+   theme(axis.text.x = element_text(size = 11))+
+  ggtitle("Mock Subtracted Analyte Concentrations")
+```
+
+
+
 ```{r setup for individual analyte HEATMAP, echo=FALSE}
 
 #I want to make a heatmap that has the following data
