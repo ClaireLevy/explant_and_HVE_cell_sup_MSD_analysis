@@ -83,3 +83,7 @@ We did a 1:5 dilution of the samples so I multiplied the concentrations by 5 to 
 If a sample had one rep that was below detection and another that was in range, I used the remaining "in range" rep as the "average" for that sample.
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/logFC%20heatmap-1.png)
+
+Here is the same heat map with some changes to to Assay names and order:
+
+![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/rename%20analytes%20logFC%20heatmap-1.png)
