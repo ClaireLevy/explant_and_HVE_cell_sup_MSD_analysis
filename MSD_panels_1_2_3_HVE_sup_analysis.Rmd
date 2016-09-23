@@ -500,6 +500,37 @@ ggplot(merge24And3, aes(x = Donor, y = Assay))+
   ggtitle("log fold change of concentrations at 24hrs over 3 hrs")
 ```
 
+Here is the same heat map with some changes to to Assay names and order:
+
+```{r rename analytes logFC heatmap, echo=FALSE}
+
+#make a new column to hold the new names
+merge24And3<-merge24And3 %>%
+  mutate(altAssayNames = ifelse(Assay == "MIG",
+                                "CXCL9",
+                                ifelse(Assay == "IP-10",
+                                       "CXCL10",
+                                       ifelse(Assay == "IL1-RA","IL-1RA",as.character(Assay)))))
+
+#factor the new assay names in the order FH wanted:
+#Note that the FIRST level will be at the bottom of the heat map axis!!!
+
+
+merge24And3$altAssayNames<-factor(merge24And3$altAssayNames)
+
+merge24And3$altAssayNames<-factor(merge24And3$altAssayNames, levels(merge24And3$altAssayNames)[c(6,5,12,11,3,14,7,18,17,19,15,13,1,16,8,4,20,9,10,2)])
+
+
+
+
+ggplot(merge24And3, aes(x = Donor, y = altAssayNames))+
+  geom_tile(aes(fill = max10fold), color = "gray")+
+  scale_fill_gradient2(low = "green", mid = "white", high = "red", midpoint = 0, name = "log10 Fold Change")+
+  facet_wrap(~Virus, scales = "free_x")+
+  labs( y = "Assay")+
+  ggtitle("log fold change of concentrations at 24hrs over 3 hrs")
+```
+
 
 
 ```{r trying pheatmap, check NAs, echo=FALSE}
