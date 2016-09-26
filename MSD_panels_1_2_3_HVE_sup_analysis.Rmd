@@ -538,6 +538,7 @@ ggplot(merge24And3, aes(x = Donor, y = altAssayNames))+
   geom_tile(aes(fill = max10fold), color = "gray")+
   scale_fill_gradient2(low = "green", mid = "white", high = "red", midpoint = 0, name = "log10 Fold Change")+
   facet_wrap(~Virus, scales = "free_x")+
+  scale_y_discrete(breaks = merge24And3$altAssayNames,labels =merge24And3$altAssayNames)+
   labs( y = "Assay")+
   ggtitle("log fold change of concentrations at 24hrs over 3 hrs")
 ```

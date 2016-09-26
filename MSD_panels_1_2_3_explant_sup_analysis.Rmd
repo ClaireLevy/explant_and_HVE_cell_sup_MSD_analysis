@@ -505,10 +505,11 @@ ggplot(mergeMock, aes(x = Timepoint, y = logMockSubtracted))+
    labs( y = "log 10 Estimated Stock Concentration pg/ml")+
    facet_grid(Assay~Virus, scales = "free_x")+
    theme(axis.text.x = element_text(size = 11))+
-  #geom_hline(yintercept = 0)+
   ggtitle("Mock Subtracted Analyte Concentrations")
 
+
 ```
+
 
 
 This is just donors 317,318,323 and 324, which were interesting in the microarray
@@ -635,6 +636,7 @@ ggplot(merge24And3, aes(x = Donor, y = Assay))+
   geom_tile(aes(fill = max10fold), color = "gray")+
   scale_fill_gradient2(low = "green", mid = "white", high = "red", midpoint = 0, name = "log10 Fold Change")+
   facet_wrap(~Virus, scales = "free_x")+
+  scale_y_discrete(breaks = merge24And3$Assay,labels =merge24And3$Assay)+
   ggtitle("log fold change of concentrations at 24hrs over 3 hrs")
 ```
 
@@ -666,4 +668,5 @@ ggplot(merge24And3, aes(x = Donor, y = altAssayNames))+
   scale_fill_gradient2(low = "green", mid = "white", high = "red", midpoint = 0, name = "log10 Fold Change")+
   facet_wrap(~Virus, scales = "free_x")+
   labs( y = "Assay")+
+  scale_y_discrete(breaks = merge24And3$altAssayNames,labels =merge24And3$altAssayNames)+
   ggtitle("log fold change of concentrations at 24hrs over 3 hrs")
