@@ -84,8 +84,6 @@ If a sample had one rep that was below detection and another that was in range, 
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/scatter%20plots%20of%20mocksubtracted-1.png)
 
-\`\`\`
-
 This is just donors 317,318,323 and 324, which were interesting in the microarray
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/subset%20scatter%20plots-1.png)
@@ -95,3 +93,5 @@ This is just donors 317,318,323 and 324, which were interesting in the microarra
 Here is the same heat map with some changes to to Assay names and order:
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/rename%20analytes%20logFC%20heatmap-1.png)
+
+This is a heat map showing the same data as above, but fewer analytes ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/analyte%20subset%20heatmap-1.png)

@@ -670,3 +670,35 @@ ggplot(merge24And3, aes(x = Donor, y = altAssayNames))+
   labs( y = "Assay")+
   scale_y_discrete(breaks = merge24And3$altAssayNames,labels =merge24And3$altAssayNames)+
   ggtitle("log fold change of concentrations at 24hrs over 3 hrs")
+
+```
+
+This is a heat map showing the same data as above, but fewer analytes
+```{r analyte subset heatmap, echo=FALSE}
+
+#want a heat map that just shows CXCL9, IL-1a, IL-10 and MIP-1b, in that order.
+
+#I'm making a vector of the ones I want so I can avoid typing the stupid greek letters.
+
+assaysIwant<- levels(merge24And3$altAssayNames)
+assaysIwant<- assaysIwant[c(6,9,17,20)]
+
+
+
+analyteSubset<- merge24And3 %>%
+  filter(altAssayNames %in% assaysIwant)
+
+
+
+#Recall that the order of the factors well get plotted bottom to top, to the one you want at the BOTTOM of hte axis needs to be in factor positiojn [1]
+analyteSubset$altAssayNames <- factor(analyteSubset$altAssayNames, levels (analyteSubset$altAssayNames) [c(6,9,17,20)])
+
+
+
+ggplot(analyteSubset, aes(x = Donor, y = altAssayNames))+
+  geom_tile(aes(fill = max10fold), color = "gray")+
+  scale_fill_gradient2(low = "green", mid = "white", high = "red", midpoint = 0, name = "log10 Fold Change")+
+  facet_wrap(~Virus, scales = "free_x")+
+  labs( y = "Assay")+
+  scale_y_discrete(breaks = merge24And3$altAssayNames,labels =merge24And3$altAssayNames)+
+  ggtitle("log fold change of concentrations at 24hrs over 3 hrs")
