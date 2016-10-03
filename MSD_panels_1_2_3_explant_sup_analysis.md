@@ -88,6 +88,8 @@ This is just donors 317,318,323 and 324, which were interesting in the microarra
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/subset%20scatter%20plots-1.png)
 
+Note that in these heat maps, the maximum intensity is a fold change of 1 or -1. Any values that were above or below these intensities were set to the max value.
+
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/logFC%20heatmap-1.png)
 
 Here is the same heat map with some changes to to Assay names and order:
