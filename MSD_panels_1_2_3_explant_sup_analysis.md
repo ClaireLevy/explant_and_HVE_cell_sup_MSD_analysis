@@ -88,7 +88,7 @@ This is just donors 317,318,323 and 324, which were interesting in the microarra
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/subset%20scatter%20plots-1.png)
 
-Note that in these heat maps, the maximum intensity is a fold change of 1 or -1. Any values that were above or below these intensities were set to the max value.
+Note that in these heat maps, the maximum intensity is a fold change of 1 or -1. Any values that were above 1 were set to 1 and any below -1 were set to -1.
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/logFC%20heatmap-1.png)
 
@@ -96,4 +96,4 @@ Here is the same heat map with some changes to to Assay names and order:
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/rename%20analytes%20logFC%20heatmap-1.png)
 
-This is a heat map showing the same data as above, but fewer analytes ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/analyte%20subset%20heatmap-1.png)
+This is a heat map showing the same data as above, but fewer analytes and with Lamar's explant 304 and 306 data added in. The gray areas are there because we were missing some data from explant 304 because it was presumably below the LOD (i.e. no concentration was given in Lamar's spreadsheet). ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/LMF_CL%20data%20log%20FC%20heatmap-1.png)

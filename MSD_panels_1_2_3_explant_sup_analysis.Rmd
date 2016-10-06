@@ -437,7 +437,7 @@ summarize(avgEstConc = mean(Estimated_Stock_Conc))%>%
 ```
 
 
-```{r  samples in sets, fig.width = 8, fig.height= 13, echo=FALSE}
+```{r  samples in sets, echo=FALSE}
 
 #Looking at the number of samples in each sample "set"(Same Donor and Timepoint). 
 
@@ -600,7 +600,7 @@ merge24And3 <- merge24And3 %>%
 ```
 
 
-Note that in these heat maps, the maximum intensity is a fold change of 1 or -1. Any values that were above or below these intensities were set to the max value.
+Note that in these heat maps, the maximum intensity is a fold change of 1 or -1. Any values that were above 1 were set to 1 and any below -1 were set to -1.
 
 
 ```{r setup logFC heatmap, echo=FALSE}
@@ -676,9 +676,7 @@ ggplot(merge24And3, aes(x = Donor, y = altAssayNames))+
 
 ```
 
-This is a heat map showing the same data as above, but fewer analytes
-```{r analyte subset heatmap, echo=FALSE}
-
+```{r to combine w/ LMF data: analyte subset logFC heatmap, echo=FALSE}
 #want a heat map that just shows CXCL9, IL-1a, IL-10 and MIP-1b, in that order.
 
 #I'm making a vector of the ones I want so I can avoid typing the stupid greek letters.
@@ -695,13 +693,252 @@ analyteSubset<- merge24And3 %>%
 
 #Recall that the order of the factors well get plotted bottom to top, to the one you want at the BOTTOM of hte axis needs to be in factor positiojn [1]
 analyteSubset$altAssayNames <- factor(analyteSubset$altAssayNames, levels (analyteSubset$altAssayNames) [c(6,9,17,20)])
+```
 
 
 
-ggplot(analyteSubset, aes(x = Donor, y = altAssayNames))+
+
+```{r adding Lamar data set up, echo=FALSE}
+
+#I have data for MIG (CXCL9), IL-1a, IL-10 and MIP-1b from two explant donors that Lamar did MSD on but I didn't: #304 and 306. 
+
+#she sent data in a spreadsheet called "HSV data Explant sups"
+#Data for each analyte is in a different tab and it is in a different format in each tab. There are notes on in this here:
+#J:\MacLabUsers\HLADIK SHARED\Projects\Herpes study\MSD\explant_and HVE_cell_sups\LMF explant 304 306 only\LMF explant 304 306 only README
+
+
+#####Important note ####
+#For these explants only, V1 = 186 and V2 = SD90. FH examined the data and we decided that this must be the case. These experiments were done pre-microarray so the assignment must have changed at somepoint. See README in J:\MacLabUsers\HLADIK SHARED\Projects\Herpes study\MSD\explant_and HVE_cell_sups\LMF explant 304 306 only
+
+#read in CL compiled Lamar data:
+
+only_304_306<- read.csv("../LMF explant 304 306 only/HSV data Explant sups_CL_compiled.csv")
+
+
+#make a virus column as my data, except remember that in this case V1 = 186, NOT SD90
+
+
+only_304_306 <- only_304_306 %>%
+  mutate(Virus = 
+           ifelse (str_detect(SampleName, "V1"),"V1",
+ ifelse(str_detect(SampleName, "V2"), "V2",
+                                ifelse(str_detect(SampleName, "M"),"M",
+                                       ifelse(str_detect(SampleName, "186"), "V1",
+
+ifelse(str_detect(SampleName, "SD90"), "V2", "0"))))))
+
+
+#fix the timepoints
+only_304_306 <- only_304_306 %>%
+  mutate(Timepoint =
+           ifelse(str_detect(SampleName, "T1"),"T1",
+ifelse(str_detect(SampleName, "T2"), "T2",
+                                ifelse(str_detect(SampleName, "T3"), "T3",
+                                       ifelse(str_detect(SampleName, "3HR"), "T1",
+
+ifelse(str_detect(SampleName, "8HR"), "T2", "T3"))))))
+
+#Fix the dose
+
+only_304_306 <- only_304_306 %>%
+  mutate(Dose =
+           ifelse(str_detect(SampleName, "D1"),"D1",
+ifelse(str_detect(SampleName, "D2"), "D2",
+                                ifelse(str_detect(SampleName, "H[Ii]"), "D1", "D2"))))
+
+
+#filter out the D2 samples since we are only interested in D1 and also filter out the T2 samples (8hr timepoint) since we are only going to be comparing timepoint 1 and 3 (3 and 24hr)
+
+
+
+
+only_304_306 <- only_304_306 %>%
+  filter(Dose == "D1", Timepoint != "T2")
+```
+
+
+
+
+```{r LMF data fixing missing data and new sample name,echo=FALSE}
+#There are several samples with missing data for the calcConc, presumeably because the ECL was below LOD. Those samples are:
+
+#304-T1-V1-D1 MIP1b
+#304-T1-V1, 304-T1-V2, 304-T1-M IL-1a
+#304-T1-M IL10
+
+#I will remove the rows with these samples, AND ALSO the following samples, because they depend on these missing ones for either mock subtraction or T1 mocksubtracted vs T3 mocksubtracted comparison:
+
+#all other samples (i.e. T3) for 304 IL-1a
+#all other samples for 304 IL-10
+
+no_missing_only_304_306 <- only_304_306 %>%
+  na.omit() %>% #remove the missing samples
+  filter(!(Donor == "304" & Assay == "IL-1a"))%>%
+  filter(!(Donor == "304" & Assay == "IL-10"))
+
+
+
+#remove some columns we don't need any more
+#add a new "sample" column by pasting donor, timepoint, virus
+no_missing_only_304_306<- no_missing_only_304_306 %>%
+  select(-c(Sample,SampleName, avgECL))%>%
+  mutate(Sample = paste(Donor,"-",Timepoint,"-",Virus, sep = ""))
+
+
+```
+
+
+```{r LMF data multiply by dil factor,echo=FALSE}
+#I want to multiply the averaged analyte concentration (CalcConc)by the dilution factor to get the average ESTIMATED concentration(avgEstConc). Then remove the columns I don't need anymore
+
+no_missing_only_304_306 <- no_missing_only_304_306 %>%
+  mutate(avgEstConc = CalcConc * DilFactor) %>%
+  select(-c(CalcConc, DilFactor))
+
+```
+
+```{r LMF data samples in sets, echo=FALSE}
+
+#Looking at the number of samples in each sample "set"(Same Donor and Timepoint). 
+
+no_missing_only_304_306_numberInSets<-no_missing_only_304_306 %>%
+         group_by(Donor,Timepoint,Assay)%>%
+  select(Sample,Donor, Timepoint,Assay)%>%
+  summarize(numInSet = n())
+
+#one set has 2 members because I am missing 304-T1-V1 for MIP1b. This won't affect the mock subtraction or T1 T3 comparison so I can leave it as is.
+
+```
+
+
+
+```{r LMF data extract and merge mock, echo=FALSE}
+#I want to subtract out the mock data from the corresponding v1 and V2 data.
+
+#extract out Mock samples
+
+mock_304_306 <- no_missing_only_304_306 %>%
+  filter(Virus == "M")
+
+# remove mock from the rest of the data
+
+no_mock_304_306 <-
+  no_missing_only_304_306 %>%
+  filter(Virus !="M")
+
+merge_304_306_mock<-merge(no_mock_304_306, mock_304_306, by = c("Donor", "Assay", "Timepoint"), all.x = TRUE, all.y = TRUE)
+
+#check for na's 
+#anyNA(merge_304_306_mock)
+#ok!!
+```
+
+```{r LMF data fix column names and do mock subtraction, echo=FALSE}
+
+merge_304_306_mock <- merge_304_306_mock %>%
+  select(-c(Dose.x, Dose.y, Sample.y, Virus.y))
+
+names(merge_304_306_mock)[4:7]<-c("Virus","Sample", "avgEstConcVirus", "avgEstConcMock")
+
+#do mock subtraction and logFC
+merge_304_306_mock<-merge_304_306_mock%>%
+  mutate(logMockSubtracted = log10(avgEstConcVirus) - log10(avgEstConcMock))
+  
+```
+
+```{r LMF logFC sub, echo=FALSE}
+# Extract the 3hr data and select a few columns
+
+timepoint3_304_306<- merge_304_306_mock %>%
+  filter(Timepoint == "T1")%>%
+  select(Donor, Assay, Sample, Virus, logMockSubtracted)
+
+
+timepoint24_304_306<- merge_304_306_mock %>%
+  filter(Timepoint == "T3")%>%
+  select(Donor, Assay, Sample, Virus, logMockSubtracted)
+
+
+#merge 24hr and 3hr data
+
+merge24And3_304_306<- merge(timepoint24_304_306,timepoint3_304_306, by  = c("Donor","Assay","Virus"), all.x = TRUE, all.y = TRUE)
+
+
+#There is an NA where I have 304-T3-V1 but was dont have data for 304-T1-V1. This is ok, I know about this missing data. I will omit the row here.
+
+merge24And3_304_306<-na.omit(merge24And3_304_306)
+
+#Fix up colnames      
+names(merge24And3_304_306)[4:7]<- c("Sample.24", "logMockSubtracted.24","Sample.3", "logMockSubtracted.3")
+
+#Do the subtraction to get a foldchange.
+
+merge24And3_304_306 <- merge24And3_304_306 %>%
+  mutate(logMockSub24_minus_logMockSub3 = logMockSubtracted.24-logMockSubtracted.3)
+
+
+#I want the scale to have max intensity a 10-fold change in either direction (log10(10)=1 on my scale and log10(0.1)= -1 on my scale) so I am going to set all values >=1 as 1 and all values <=-1 as -1.
+
+#set all values >=1 as 1
+
+merge24And3_304_306 <- merge24And3_304_306 %>%
+  mutate(max10fold =
+           ifelse(
+             logMockSub24_minus_logMockSub3 >=1,
+         1,
+           ifelse(
+             logMockSub24_minus_logMockSub3 <=-1,
+         -1,logMockSub24_minus_logMockSub3)
+           )
+  )
+```
+
+```{r LMF data fix the virus and assay names, echo=FALSE}
+
+#remember that for these data, V1 = 186
+merge24And3_304_306 <-merge24And3_304_306 %>%
+  mutate(Virus = ifelse(Virus == "V1","186","SD90"))
+
+
+#fix assay names
+
+merge24And3_304_306 <-merge24And3_304_306 %>%
+  mutate(altAssayNames =
+ifelse(Assay == "MIG", "CXCL9",
+ifelse(Assay == "IL-1a","IL-1\U03B1",
+ifelse(Assay == "MIP1b", "MIP-1\U03B2", as.character(Assay)))))
+```
+
+```{r combine LMF data and my assay subset data, echo=FALSE}
+#Make donor, virus assay and sample into factors
+merge24And3_304_306$Donor<-factor(merge24And3_304_306$Donor)
+
+merge24And3_304_306$Virus<-factor(merge24And3_304_306$Virus)
+
+merge24And3_304_306$altAssayNames<-factor(merge24And3_304_306$altAssayNames)
+merge24And3_304_306$Sample.24<-factor(merge24And3_304_306$Sample.24)
+
+merge24And3_304_306$Sample.3<-factor(merge24And3_304_306$Sample.3)
+
+
+#rbind my subsetted dataframe and LMF's data
+LMF_CL_explant<-rbind(analyteSubset, merge24And3_304_306)
+
+
+```
+
+
+
+This is a heat map showing the same data as above, but fewer analytes and with Lamar's explant 304 and 306 data added in. The gray areas are there because we were missing some data from explant 304 because it was presumably below the LOD (i.e. no concentration was given in Lamar's spreadsheet).
+```{r LMF_CL data log FC heatmap, echo=FALSE}
+
+#Note that we are missing some data from explants 304 and 306 because it was presumeably below LOD, I addressed this in the chunk titled "LMF data fixing missing data.."
+
+ggplot(LMF_CL_explant, aes(x = Donor, y = altAssayNames))+
   geom_tile(aes(fill = max10fold), color = "gray")+
   scale_fill_gradient2(low = "green", mid = "white", high = "red", midpoint = 0, name = "log10 Fold Change")+
   facet_wrap(~Virus, scales = "free_x")+
   labs( y = "Assay")+
   scale_y_discrete(breaks = merge24And3$altAssayNames,labels =merge24And3$altAssayNames)+
   ggtitle("log fold change of concentrations at 24hrs over 3 hrs")
+```
