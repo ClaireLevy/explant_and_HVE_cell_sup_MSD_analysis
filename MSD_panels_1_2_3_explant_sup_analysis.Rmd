@@ -766,15 +766,51 @@ only_304_306 <- only_304_306 %>%
 #304-T1-V1, 304-T1-V2, 304-T1-M IL-1a
 #304-T1-M IL10
 
-#I will remove the rows with these samples, AND ALSO the following samples, because they depend on these missing ones for either mock subtraction or T1 mocksubtracted vs T3 mocksubtracted comparison:
+#FH asked me to set the concentrations for these "below LOD" data to just below the minimum value for those analytes. I'll subtract 10% of the minimum value and set the below LOD to that.
 
-#all other samples (i.e. T3) for 304 IL-1a
-#all other samples for 304 IL-10
+#get the minimum for the different analytes
+MIP1b<-only_304_306 %>%
+  filter(Assay == "MIP1b")
 
-no_missing_only_304_306 <- only_304_306 %>%
-  na.omit() %>% #remove the missing samples
-  filter(!(Donor == "304" & Assay == "IL-1a"))%>%
-  filter(!(Donor == "304" & Assay == "IL-10"))
+lessThanMinMIP1b<-min((na.omit(MIP1b$CalcConc)))-
+  0.1 * (min((na.omit(MIP1b$CalcConc))))
+
+IL1a<-only_304_306 %>%
+  filter(Assay == "IL1a")
+
+lessThanMinIL1a<-min((na.omit(IL1a$CalcConc)))-
+  0.1 * (min((na.omit(IL1a$CalcConc))))
+
+
+IL10<-only_304_306 %>%
+  filter(Assay == "IL-10")
+
+lessThanMinMIP1b<-min((na.omit(IL10$CalcConc)))-
+  0.1 * (min((na.omit(IL10$CalcConc))))
+
+#just the samples with nas
+
+missing<- only_304_306[rowSums(is.na(only_304_306)) > 0,]
+
+no_missing <- na.omit(only_304_306)
+
+#fix the missing data
+#TEST THIS ####
+
+missing<- missing %>% 
+  mutate(CalcConc = 
+    ifelse(Assay == "MIP1b" &
+            SampleName =="3HR.186.HI",
+            lessThanMinMIP1b,
+         ifelse(Assay == "IL-1a" &
+                  Timepoint == "T1",
+                  lessThanMinIL1a, 
+           ifelse(Assay == "IL-10" &
+                  SampleName == "24HR.Mock.Hi",
+                  lessThanMinIL10,CalcConc))))
+
+#Now combine the missing and no missing data and continue....
+
 
 
 
@@ -806,14 +842,14 @@ no_missing_only_304_306_numberInSets<-no_missing_only_304_306 %>%
   select(Sample,Donor, Timepoint,Assay)%>%
   summarize(numInSet = n())
 
-#one set has 2 members because I am missing 304-T1-V1 for MIP1b. This won't affect the mock subtraction or T1 T3 comparison so I can leave it as is.
+#all sets are complete since I added in values for the missing data above.
 
 ```
 
 
 
 ```{r LMF data extract and merge mock, echo=FALSE}
-#I want to subtract out the mock data from the corresponding v1 and V2 data.
+#I want to subtract out the mock data from the corresponding V1 and V2 data.
 
 #extract out Mock samples
 
