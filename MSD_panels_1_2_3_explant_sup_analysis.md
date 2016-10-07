@@ -82,13 +82,25 @@ We did a 1:5 dilution of the samples so I multiplied the concentrations by 5 to 
 
 If a sample had one rep that was below detection and another that was in range, I used the remaining "in range" rep as the "average" for that sample.
 
+Note we did not have supernatents for:
+
+Donor 323 for SD90, all time points
+
+Donor 326 for SD90 and 186, 3hr and 8hr
+
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/scatter%20plots%20of%20mocksubtracted-1.png)
 
-This is just donors 317,318,323 and 324, which were interesting in the microarray
+This is just donors 317,318,323 and 324, which were interesting in the microarray.
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/subset%20scatter%20plots-1.png)
 
 Note that in these heat maps, the maximum intensity is a fold change of 1 or -1. Any values that were above 1 were set to 1 and any below -1 were set to -1.
+
+Also note we were missing supernatents for:
+
+Donor 323 for SD90, all time points
+
+Donor 326 for SD90 and 186, 3hr and 8hr
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/logFC%20heatmap-1.png)
 
@@ -96,4 +108,16 @@ Here is the same heat map with some changes to to Assay names and order:
 
 ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/rename%20analytes%20logFC%20heatmap-1.png)
 
-This is a heat map showing the same data as above, but fewer analytes and with Lamar's explant 304 and 306 data added in. The gray areas are there because we were missing some data from explant 304 because it was presumably below the LOD (i.e. no concentration was given in Lamar's spreadsheet). ![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/LMF_CL%20data%20log%20FC%20heatmap-1.png)
+This is a heat map showing the same data as above, but fewer analytes and with Lamar's explant 304 and 306 data added in.
+
+Lamar's data did not have average concentrations for the following samples, probably becuse the electronic signal was below the level of detection:
+
+MIP1b: 304-3hr-186
+
+IL-1a: 304-3hr-186, 304-3hr-SD90, 304-3hr-Mock
+
+IL-10: 304-3hr-Mock
+
+In order to reflect on the heat map that these samples had low values, I set the average concentrations to 10% below the minimum average concentration for the analyte of interest. I.e. I set the average concentration of MIP1b for sample 304-3hr-186 to 0.076, which is 10% less than the minimum MIP1b average concentration from among all the MIP1b samples where we *did* have data.
+
+![](MSD_panels_1_2_3_explant_sup_analysis_files/figure-markdown_github/LMF_CL%20data%20log%20FC%20heatmap-1.png)

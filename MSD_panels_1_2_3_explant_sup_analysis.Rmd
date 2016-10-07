@@ -456,7 +456,7 @@ avgConc_explant_all_panels_noStds_AdjBelow <- merge(avgConc_explant_all_panels_n
 ```
 
 
-```{r  merge and subtract mock, fig.width = 8, fig.height= 13, echo=FALSE}
+```{r  merge and subtract mock, echo=FALSE}
 
 #I want to subtract out the mock data from the corresponding v1 and V2 data.
 
@@ -498,6 +498,12 @@ We did a 1:5 dilution of the samples so I multiplied the concentrations by 5 to 
 If a sample had one rep that was below detection and another that was in range, I used the remaining "in range" rep as the "average" for that sample.
 
 
+Note we did not have supernatents for:
+
+Donor 323 for SD90, all time points
+
+Donor 326 for SD90 and 186, 3hr and 8hr
+
 ```{r scatter plots of mocksubtracted, fig.width = 6,fig.height= 13, echo=FALSE}
 
 ggplot(mergeMock, aes(x = Timepoint, y = logMockSubtracted))+
@@ -512,7 +518,7 @@ ggplot(mergeMock, aes(x = Timepoint, y = logMockSubtracted))+
 
 
 
-This is just donors 317,318,323 and 324, which were interesting in the microarray
+This is just donors 317,318,323 and 324, which were interesting in the microarray.
 
 ```{r subset scatter plots, fig.width = 6,fig.height= 13, echo=FALSE}
 
@@ -600,7 +606,6 @@ merge24And3 <- merge24And3 %>%
 ```
 
 
-Note that in these heat maps, the maximum intensity is a fold change of 1 or -1. Any values that were above 1 were set to 1 and any below -1 were set to -1.
 
 
 ```{r setup logFC heatmap, echo=FALSE}
@@ -624,13 +629,19 @@ merge24And3 <- merge24And3 %>%
 ```       
 
 
+Note that in these heat maps, the maximum intensity is a fold change of 1 or -1. Any values that were above 1 were set to 1 and any below -1 were set to -1.
 
+Also note we were missing supernatents for:
+
+Donor 323 for SD90, all time points
+
+Donor 326 for SD90 and 186, 3hr and 8hr
 
 ```{r logFC heatmap, echo=FALSE}
 
 #Note that we should NOT have data for the following samples  because we didnt have sup for them
 
-# 323-T2-Anything (i.e. no SD90 data)
+# 323-T1-V1, 323-T2-V1, 323-T3-V1 (so no SD90 data for any time point)
 # Didnt have sup for 326 T1 OR T2 (and this shows T3/T1 so we don't have anything)
 
 
@@ -776,7 +787,7 @@ lessThanMinMIP1b<-min((na.omit(MIP1b$CalcConc)))-
   0.1 * (min((na.omit(MIP1b$CalcConc))))
 
 IL1a<-only_304_306 %>%
-  filter(Assay == "IL1a")
+  filter(Assay == "IL-1a")
 
 lessThanMinIL1a<-min((na.omit(IL1a$CalcConc)))-
   0.1 * (min((na.omit(IL1a$CalcConc))))
@@ -785,7 +796,7 @@ lessThanMinIL1a<-min((na.omit(IL1a$CalcConc)))-
 IL10<-only_304_306 %>%
   filter(Assay == "IL-10")
 
-lessThanMinMIP1b<-min((na.omit(IL10$CalcConc)))-
+lessThanMinIL10<-min((na.omit(IL10$CalcConc)))-
   0.1 * (min((na.omit(IL10$CalcConc))))
 
 #just the samples with nas
@@ -811,12 +822,12 @@ missing<- missing %>%
 
 #Now combine the missing and no missing data and continue....
 
-
+complete_304_306<-rbind(no_missing,missing)
 
 
 #remove some columns we don't need any more
 #add a new "sample" column by pasting donor, timepoint, virus
-no_missing_only_304_306<- no_missing_only_304_306 %>%
+complete_304_306<- complete_304_306 %>%
   select(-c(Sample,SampleName, avgECL))%>%
   mutate(Sample = paste(Donor,"-",Timepoint,"-",Virus, sep = ""))
 
@@ -827,7 +838,7 @@ no_missing_only_304_306<- no_missing_only_304_306 %>%
 ```{r LMF data multiply by dil factor,echo=FALSE}
 #I want to multiply the averaged analyte concentration (CalcConc)by the dilution factor to get the average ESTIMATED concentration(avgEstConc). Then remove the columns I don't need anymore
 
-no_missing_only_304_306 <- no_missing_only_304_306 %>%
+complete_304_306 <- complete_304_306 %>%
   mutate(avgEstConc = CalcConc * DilFactor) %>%
   select(-c(CalcConc, DilFactor))
 
@@ -837,7 +848,7 @@ no_missing_only_304_306 <- no_missing_only_304_306 %>%
 
 #Looking at the number of samples in each sample "set"(Same Donor and Timepoint). 
 
-no_missing_only_304_306_numberInSets<-no_missing_only_304_306 %>%
+complete_304_306_numberInSets<-complete_304_306 %>%
          group_by(Donor,Timepoint,Assay)%>%
   select(Sample,Donor, Timepoint,Assay)%>%
   summarize(numInSet = n())
@@ -853,16 +864,16 @@ no_missing_only_304_306_numberInSets<-no_missing_only_304_306 %>%
 
 #extract out Mock samples
 
-mock_304_306 <- no_missing_only_304_306 %>%
+mock_304_306 <- complete_304_306 %>%
   filter(Virus == "M")
 
 # remove mock from the rest of the data
 
 no_mock_304_306 <-
-  no_missing_only_304_306 %>%
+  complete_304_306 %>%
   filter(Virus !="M")
 
-merge_304_306_mock<-merge(no_mock_304_306, mock_304_306, by = c("Donor", "Assay", "Timepoint"), all.x = TRUE, all.y = TRUE)
+merge_304_306_mock<-merge(complete_304_306, mock_304_306, by = c("Donor", "Assay", "Timepoint"), all.x = TRUE, all.y = TRUE)
 
 #check for na's 
 #anyNA(merge_304_306_mock)
@@ -900,10 +911,6 @@ timepoint24_304_306<- merge_304_306_mock %>%
 merge24And3_304_306<- merge(timepoint24_304_306,timepoint3_304_306, by  = c("Donor","Assay","Virus"), all.x = TRUE, all.y = TRUE)
 
 
-#There is an NA where I have 304-T3-V1 but was dont have data for 304-T1-V1. This is ok, I know about this missing data. I will omit the row here.
-
-merge24And3_304_306<-na.omit(merge24And3_304_306)
-
 #Fix up colnames      
 names(merge24And3_304_306)[4:7]<- c("Sample.24", "logMockSubtracted.24","Sample.3", "logMockSubtracted.3")
 
@@ -913,7 +920,7 @@ merge24And3_304_306 <- merge24And3_304_306 %>%
   mutate(logMockSub24_minus_logMockSub3 = logMockSubtracted.24-logMockSubtracted.3)
 
 
-#I want the scale to have max intensity a 10-fold change in either direction (log10(10)=1 on my scale and log10(0.1)= -1 on my scale) so I am going to set all values >=1 as 1 and all values <=-1 as -1.
+#I want the scale to have max intensity a 10-fold change in either direction (log10(10)=1 on my scale and log10(0.1)= -1 on my scale) so I am going to set all values >=1 as 1 and all values <=-1 as -1. Right now there aren't any values >1 or <-1 but I'm doing this anyway since I did it for my data and want to have the same columns and protocol.
 
 #set all values >=1 as 1
 
@@ -965,7 +972,19 @@ LMF_CL_explant<-rbind(analyteSubset, merge24And3_304_306)
 
 
 
-This is a heat map showing the same data as above, but fewer analytes and with Lamar's explant 304 and 306 data added in. The gray areas are there because we were missing some data from explant 304 because it was presumably below the LOD (i.e. no concentration was given in Lamar's spreadsheet).
+This is a heat map showing the same data as above, but fewer analytes and with Lamar's explant 304 and 306 data added in. 
+
+Lamar's data did not have average concentrations for the following samples, probably becuse the electronic signal was below the level of detection:
+
+MIP1b: 304-3hr-186
+
+IL-1a: 304-3hr-186, 304-3hr-SD90, 304-3hr-Mock
+
+IL-10: 304-3hr-Mock
+
+In order to reflect on the heat map that these samples had low values, I set the average concentrations to 10% below the minimum  average concentration for the analyte of interest. I.e. I set the average concentration of MIP1b for sample 304-3hr-186 to 0.076, which is 10% less than the minimum MIP1b average concentration from among all the MIP1b samples where we *did* have data.
+
+
 ```{r LMF_CL data log FC heatmap, echo=FALSE}
 
 #Note that we are missing some data from explants 304 and 306 because it was presumeably below LOD, I addressed this in the chunk titled "LMF data fixing missing data.."
