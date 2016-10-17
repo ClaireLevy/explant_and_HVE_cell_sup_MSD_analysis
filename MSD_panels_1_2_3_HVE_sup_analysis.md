@@ -60,6 +60,11 @@ The following plots show that the 1:2 dilution of the samples resulted in more s
 
 ![](MSD_panels_1_2_3_HVE_sup_analysis_files/figure-markdown_github/checking%20detection%20range-1.png)
 
+Apparently epithelial cells don't make IFNg, but we did get some signal. Here are the summary statistics for the dilution-corrected IFNg concentrations:
+
+    ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max.    NA's 
+    ## 0.02352 0.47890 1.00300 1.57800 1.71400 9.90800      44
+
 Estimated Sample Concentration Distribution
 -------------------------------------------
 

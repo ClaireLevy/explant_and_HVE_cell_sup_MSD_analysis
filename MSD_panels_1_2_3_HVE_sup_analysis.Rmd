@@ -201,6 +201,22 @@ HVE_all_panels_noStds <- HVE_all_panels_noStds%>%
     Sample_Dilution == "1:2", Calc..Concentration * 2,
     ifelse(Sample_Dilution == "1:5", Calc..Concentration *5, NA)
   ))
+```
+
+
+Apparently epithelial cells don't make IFNg, but we did get some signal. Here are the summary statistics for the dilution-corrected IFNg concentrations:
+
+
+```{r check IFNg concentrations, echo=FALSE, message = FALSE, warning = FALSE}
+##apparently epithelial cells aren't known to make IFNg, so let's check those concentrations
+
+IFNgOnly<-HVE_all_panels_noStds %>%
+  filter(Assay == "IFNg")
+
+summary(IFNgOnly$Estimated_Stock_Conc)
+
+
+
 
 ```
 
